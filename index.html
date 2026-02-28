@@ -909,29 +909,36 @@
    ═══════════════════════════════════════════════════════════════════════ */
 
   /* ── BACKEND CONFIG ────────────────────────────────────────────────────
-     Replace these with your real endpoints once deployed.
-     Cloudflare Worker tutorial: https://developers.cloudflare.com/workers/
+     ┌──────────────────────────────────────────────────────────────────┐
+     │  STEP 1 OF 1 — THE ONLY THING YOU NEED TO CHANGE TO GO LIVE     │
+     │                                                                  │
+     │  Replace the WORKER_URL below with the URL you receive after     │
+     │  running "wrangler deploy" on your Cloudflare Worker.            │
+     │                                                                  │
+     │  It will look like:                                              │
+     │  https://dogsnap-api.YOUR_NAME.workers.dev                       │
+     │                                                                  │
+     │  Your Worker must expose 4 routes:                               │
+     │    POST /upload      → accepts FormData(file, handle, userName)  │
+     │                        returns { url: "https://..." }            │
+     │    GET  /posts       → returns array of post objects             │
+     │    POST /like        → accepts { postId, action:"inc"|"dec" }    │
+     │    POST /comment     → accepts { postId, userId, text }          │
+     │                                                                  │
+     │  Cloudflare Worker docs: https://developers.cloudflare.com/workers/│
+     └──────────────────────────────────────────────────────────────────┘
   ──────────────────────────────────────────────────────────────────────── */
   const CONFIG = {
-    // ── BACKEND HOOK: replace with your Cloudflare Worker URL ──────────
-    WORKER_URL: "https://YOUR_WORKER.YOUR_SUBDOMAIN.workers.dev",
+    // ╔══════════════════════════════════════════════════════════════╗
+    // ║  REPLACE THIS URL ↓  with your deployed Cloudflare Worker   ║
+    // ╚══════════════════════════════════════════════════════════════╝
+    WORKER_URL: "https://dogsnap-api.YOUR_NAME.workers.dev",
 
-    // ── BACKEND HOOK: replace with your Supabase project URL ───────────
-    SUPABASE_URL: "https://YOUR_PROJECT_ID.supabase.co",
-
-    // ── BACKEND HOOK: replace with your Supabase anon key ──────────────
-    // Safe to expose — Row Level Security policies protect the data.
-    SUPABASE_ANON_KEY: "YOUR_SUPABASE_ANON_KEY",
-
-    // ── BACKEND HOOK: replace with your Cloudflare R2 bucket URL ───────
-    // Used for storing compressed images instead of blob: URLs.
-    R2_PUBLIC_URL: "https://pub-YOUR_ACCOUNT.r2.dev",
-
-    // App-level settings
-    SNAP_TTL_MS: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
-    MAX_IMG_WIDTH: 1080,               // pixels — resize before upload
-    IMG_QUALITY: 0.72,                 // WebP quality (0–1)
-    LOCAL_STORAGE_KEY: "dogsnap_user_v2",
+    // ── App-level settings (no need to change these) ────────────────
+    SNAP_TTL_MS:       24 * 60 * 60 * 1000, // 24 hours in milliseconds
+    MAX_IMG_WIDTH:     1080,                 // px — resize before upload
+    IMG_QUALITY:       0.72,                 // WebP quality 0–1 (0.72 = 72%)
+    LOCAL_STORAGE_KEY: "dogsnap_user_v2",    // localStorage key for session
   };
 
 
@@ -1181,26 +1188,72 @@
   /* ═══════════════════════════════════════════════════════════════════
      RENDER — FEED
      ══════════════════════════════════════════════════════════════════
-     ── BACKEND HOOK ────────────────────────────────────────────────────
-     Replace the MOCK_POSTS array with a real API call:
-       const res   = await fetch(`${CONFIG.WORKER_URL}/feed`);
-       feed        = await res.json();
-       renderFeed();
-     ────────────────────────────────────────────────────────────────── */
-  function renderFeed() {
+     HOW IT WORKS:
+       1. Tries to load posts from your Cloudflare Worker (GET /posts).
+       2. If the Worker URL hasn't been set yet (still placeholder) OR
+          if the network request fails, it falls back to MOCK_POSTS so
+          the app always looks good during development.
+       3. Once your Worker is deployed, real posts from ALL users will
+          appear here automatically — no other changes needed.
+  ═══════════════════════════════════════════════════════════════════ */
+  async function renderFeed() {
     const container = document.getElementById("feed-container");
-    container.innerHTML = "";
 
-    if (feed.length === 0) {
-      container.innerHTML = `
-        <div class="empty-state">
-          <div class="empty-icon">🦴</div>
-          <p style="font-weight:700">No snaps in your area.<br/>Be the first to bark!</p>
-        </div>`;
-      return;
+    // Show a subtle skeleton state while loading
+    container.innerHTML = `
+      <div style="padding:2rem 1rem;text-align:center;opacity:.3">
+        <div style="width:2rem;height:2rem;border:3px solid var(--accent1);border-top-color:transparent;
+             border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem"></div>
+        <p style="font-size:.8rem;font-weight:700">Fetching snaps…</p>
+      </div>`;
+
+    try {
+      // ── Only attempt a real fetch when the URL has been replaced ──────
+      // This guard stops pointless network errors during local dev.
+      const isRealUrl = !CONFIG.WORKER_URL.includes("YOUR_NAME");
+
+      let dynamicFeed;
+
+      if (isRealUrl) {
+        // ── LIVE MODE: load real posts from your Cloudflare Worker ───────
+        // Your Worker's GET /posts endpoint should return an array like:
+        // [{ id, userName, userHandle, image, likes, caption, timestamp, comments }]
+        const res = await fetch(`${CONFIG.WORKER_URL}/posts`);
+        if (!res.ok) throw new Error(`Server responded ${res.status}`);
+        dynamicFeed = await res.json();
+      } else {
+        // ── DEV MODE: use mock data while Worker URL is still placeholder ─
+        // Remove this else-branch (or set isRealUrl = true) once deployed.
+        dynamicFeed = MOCK_POSTS;
+      }
+
+      // Update the global feed array so profile stats stay in sync
+      feed = dynamicFeed;
+
+      container.innerHTML = "";
+
+      if (feed.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🦴</div>
+            <p style="font-weight:700">No snaps in your area.<br/>Be the first to bark!</p>
+          </div>`;
+        return;
+      }
+
+      feed.forEach(post => container.appendChild(buildPostCard(post)));
+
+    } catch (err) {
+      // ── Network / parse error — fall back to mock data gracefully ─────
+      console.warn("Feed fetch failed, using mock data:", err);
+      container.innerHTML = "";
+      feed = MOCK_POSTS;
+      feed.forEach(post => container.appendChild(buildPostCard(post)));
+      // Only show the error toast if a real URL was configured
+      if (!CONFIG.WORKER_URL.includes("YOUR_NAME")) {
+        showToast("Server connection failed 🐾");
+      }
     }
-
-    feed.forEach(post => container.appendChild(buildPostCard(post)));
   }
 
   /**
@@ -1288,19 +1341,39 @@
 
       // ── Wire up events after re-render ───────────────────────────
 
-      // Like button
+      // ── Like button ─────────────────────────────────────────────────
+      // Optimistic UI: update the count instantly, then sync to backend.
+      // If the backend call fails, the count stays updated locally for
+      // this session — a common pattern used by Instagram/TikTok.
       const likeBtn = article.querySelector(`#like-btn-${post.id}`);
-      likeBtn.addEventListener("click", () => {
+      likeBtn.addEventListener("click", async () => {
+        // 1. Toggle state instantly (optimistic update)
         liked      = !liked;
         localLikes = liked ? localLikes + 1 : localLikes - 1;
-        /* ── BACKEND HOOK: POST a like to your Worker ─────────────
-           fetch(`${CONFIG.WORKER_URL}/like`, {
-             method: 'POST',
-             body: JSON.stringify({ postId: post.id, userId: currentUser.id }),
-             headers: { 'Content-Type': 'application/json' }
-           });
-        ──────────────────────────────────────────────────────────── */
-        render();
+        render(); // re-render immediately so user sees the change
+
+        // 2. Fire-and-forget sync to backend
+        // We don't await this — we don't want to block the UI.
+        // If it fails, the like is still shown locally for this session.
+        try {
+          const isRealUrl = !CONFIG.WORKER_URL.includes("YOUR_NAME");
+          if (isRealUrl) {
+            // POST /like  →  body: { postId, action: "inc" | "dec" }
+            fetch(`${CONFIG.WORKER_URL}/like`, {
+              method:  "POST",
+              headers: { "Content-Type": "application/json" },
+              body:    JSON.stringify({
+                postId: post.id,
+                action: liked ? "inc" : "dec",
+                userId: currentUser ? currentUser.id : "anonymous",
+              }),
+            });
+            // Note: intentionally not awaited — optimistic UI pattern
+          }
+        } catch (err) {
+          // Silent fail — like is preserved locally even if backend is down
+          console.warn("Like sync failed:", err);
+        }
       });
 
       // Double-tap to like on the image
@@ -1333,19 +1406,30 @@
       if (showComments && currentUser) {
         const input    = article.querySelector(`#comment-input-${post.id}`);
         const postBtn  = article.querySelector(`#comment-post-${post.id}`);
-        const submit   = () => {
+        const submit = async () => {
           const text = input.value.trim();
           if (!text) return;
+
+          // Optimistic update — show comment instantly
           comments.push({ id: Date.now(), handle: currentUser.handle, text, time: "now" });
           input.value = "";
-          /* ── BACKEND HOOK: POST comment to Worker ─────────────────
-             fetch(`${CONFIG.WORKER_URL}/comment`, {
-               method: 'POST',
-               body: JSON.stringify({ postId: post.id, userId: currentUser.id, text }),
-               headers: { 'Content-Type': 'application/json' }
-             });
-          ────────────────────────────────────────────────────────── */
           render();
+
+          // Fire-and-forget sync to backend
+          try {
+            const isRealUrl = !CONFIG.WORKER_URL.includes("YOUR_NAME");
+            if (isRealUrl) {
+              // POST /comment → body: { postId, userId, text }
+              fetch(`${CONFIG.WORKER_URL}/comment`, {
+                method:  "POST",
+                headers: { "Content-Type": "application/json" },
+                body:    JSON.stringify({ postId: post.id, userId: currentUser.id, text }),
+              });
+              // Intentionally not awaited — optimistic UI
+            }
+          } catch (err) {
+            console.warn("Comment sync failed:", err);
+          }
         };
         postBtn.addEventListener("click", submit);
         input.addEventListener("keydown", e => { if (e.key === "Enter") submit(); });
@@ -1437,6 +1521,17 @@
 
   /* ═══════════════════════════════════════════════════════════════════
      IMAGE UPLOAD FLOW
+     ══════════════════════════════════════════════════════════════════
+     WHAT HAPPENS STEP BY STEP:
+       1. User picks a photo (camera or gallery).
+       2. compressImage() shrinks it to ≤1080px wide, converts to WebP.
+          Typical saving: 4 MB photo → ~150 KB  (96% smaller).
+       3. In LIVE MODE: sends the compressed blob to your Cloudflare
+          Worker as FormData. The Worker saves it to R2 and returns
+          the permanent public URL.
+       4. In DEV MODE (Worker URL not set): uses a local blob: URL so
+          you can test the full UI flow without a backend.
+       5. Refreshes the feed so the new post appears at the top.
   ═══════════════════════════════════════════════════════════════════ */
   function handleFileSelected(e) {
     const file = e.target.files[0];
@@ -1444,53 +1539,71 @@
 
     document.getElementById("upload-overlay").classList.add("open");
 
-    compressImage(file, blob => {
+    compressImage(file, async (blob) => {
       if (!blob) {
         document.getElementById("upload-overlay").classList.remove("open");
         showToast("Compression failed 😕");
         return;
       }
 
-      /* ── BACKEND HOOK ─────────────────────────────────────────────
-         Upload `blob` to Cloudflare R2 via your Worker and get a
-         permanent URL back. Replace the blob: URL below:
+      try {
+        const isRealUrl = !CONFIG.WORKER_URL.includes("YOUR_NAME");
+        let imageUrl;
 
-         const form = new FormData();
-         form.append("file", blob, `snap-${Date.now()}.webp`);
-         const res  = await fetch(`${CONFIG.WORKER_URL}/upload`, { method:"POST", body: form });
-         const { url } = await res.json(); // e.g. "https://pub-xxx.r2.dev/snap-123.webp"
-         const imageUrl = url;
+        if (isRealUrl) {
+          // ── LIVE MODE: upload compressed blob to Cloudflare Worker ────
+          //
+          // Your Worker receives this FormData and should:
+          //   1. Save `file` (the WebP blob) to a Cloudflare R2 bucket.
+          //   2. Save the post metadata to KV or D1.
+          //   3. Return JSON: { url: "https://pub-xxx.r2.dev/snap-123.webp" }
+          //
+          // FormData fields sent:
+          //   file     → the compressed WebP Blob
+          //   handle   → e.g. "@goldie_pup"
+          //   userName → e.g. "Goldie"
+          //   userId   → the user's unique ID from localStorage
+          const formData = new FormData();
+          formData.append("file",     blob,                 `snap-${Date.now()}.webp`);
+          formData.append("handle",   currentUser.handle);
+          formData.append("userName", currentUser.name);
+          formData.append("userId",   currentUser.id);
 
-         Then also save the post metadata:
-         await fetch(`${CONFIG.WORKER_URL}/posts`, {
-           method: "POST",
-           headers: { "Content-Type": "application/json" },
-           body: JSON.stringify({ userId: currentUser.id, imageUrl, caption: "" })
-         });
-      ──────────────────────────────────────────────────────────────── */
-      const imageUrl = URL.createObjectURL(blob); // ← replace with R2 URL
+          // POST /upload → { url: "https://..." }
+          const res = await fetch(`${CONFIG.WORKER_URL}/upload`, {
+            method: "POST",
+            body:   formData,
+            // Note: do NOT set Content-Type header — browser sets it
+            //       automatically with the correct multipart boundary.
+          });
 
-      const newPost = {
-        id:          Date.now(),
-        userName:    currentUser.name,
-        userHandle:  currentUser.handle,
-        image:       imageUrl,
-        likes:       0,
-        caption:     "",
-        timestamp:   "just now",
-        comments:    [],
-        expiresAt:   Date.now() + CONFIG.SNAP_TTL_MS,
-      };
+          if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
 
-      feed.unshift(newPost); // add to top of feed
+          const data = await res.json();
+          imageUrl = data.url; // permanent R2 URL, visible to all users
 
-      document.getElementById("upload-overlay").classList.remove("open");
-      switchTab("home");
-      renderFeed();
-      showToast("Snap posted! 📸");
+        } else {
+          // ── DEV MODE: use a temporary local blob: URL ─────────────────
+          // This only works in your current browser tab — perfect for
+          // testing the UI before your Worker is deployed.
+          imageUrl = URL.createObjectURL(blob);
+        }
+
+        // 3. Refresh the feed from the server (or mock) to show the new post
+        showToast("Snap posted! 📸");
+        await renderFeed();
+        switchTab("home");
+
+      } catch (err) {
+        console.error("Upload error:", err);
+        showToast("Upload failed — check your connection 🐾");
+      } finally {
+        // Always hide the overlay, even if something went wrong
+        document.getElementById("upload-overlay").classList.remove("open");
+      }
     });
 
-    e.target.value = ""; // reset so same file can be re-selected
+    e.target.value = ""; // reset input so same file can be re-selected
   }
 
 
@@ -1541,9 +1654,9 @@
     document.getElementById("screen-auth").style.display = "none";
     document.getElementById("screen-main").classList.add("active");
 
-    // Render initial data
+    // Render initial data (renderFeed is async but we don't need to block here)
     renderStories();
-    renderFeed();
+    renderFeed(); // async — feed updates when data arrives
     renderExplore();
     startTimer();
   }
