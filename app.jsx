@@ -349,7 +349,7 @@ const CameraUpload = ({ inputRef }) => (
 );
 
 // ── Root App ───────────────────────────────────────────────────
-export default function App() {
+function App() {
   const [dogs, setDogs]           = useState(INITIAL_DOGS);
   const [viewingStatus, setViewingStatus] = useState(null); // null | dog object
   const [likes, setLikes]         = useState(() =>
