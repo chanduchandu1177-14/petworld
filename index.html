@@ -1,14 +1,1597 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="./vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>dogsnap-app</title>
-    <script type="module" crossorigin src="./assets/index-C8nm0uHk.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-BuEUWokZ.css">
-  </head>
-  <body>
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>DogSnap — Ephemeral Pups</title>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       FONTS — Bebas Neue (display) + DM Sans (body)
+       No build tools. Everything loads from Google Fonts CDN.
+  ═══════════════════════════════════════════════════════════════════ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;700;900&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════
+       CSS VARIABLES — change colors here to retheme the whole app
+    ═══════════════════════════════════════════════════════════════════ */
+    :root {
+      --bg:        #09090b;
+      --surface:   #18181b;
+      --border:    #27272a;
+      --text:      #fafafa;
+      --muted:     #71717a;
+      --accent1:   #f97316;  /* orange */
+      --accent2:   #ec4899;  /* pink   */
+      --accent3:   #a855f7;  /* purple */
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-body:    'DM Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      min-height: 100dvh;
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── App shell — phone-width column ────────────────────────────── */
+    #app {
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100dvh;
+      border-left:  1px solid var(--border);
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+
+    /* ── Utility ────────────────────────────────────────────────────── */
+    button { cursor: pointer; border: none; background: none; color: inherit; font-family: inherit; }
+    input  { font-family: inherit; }
+    img    { display: block; }
+
+    .hidden { display: none !important; }
+
+    /* gradient text helper */
+    .grad-text {
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ────────────────────────────────────────────────────────────────
+       AUTH SCREEN
+    ──────────────────────────────────────────────────────────────── */
+    #screen-auth {
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      background: radial-gradient(ellipse at top, #431407 0%, var(--bg) 65%);
+    }
+    #screen-auth .inner { width: 100%; max-width: 360px; }
+
+    .auth-logo {
+      font-family: var(--font-display);
+      font-size: 5rem;
+      letter-spacing: 2px;
+      text-align: center;
+      line-height: 1;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .auth-tagline {
+      text-align: center;
+      font-size: .65rem;
+      letter-spacing: .3em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: .4rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .auth-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 1rem;
+      padding: 1rem 1.1rem;
+      color: var(--text);
+      font-size: .9rem;
+      outline: none;
+      transition: border-color .2s;
+      margin-bottom: .75rem;
+    }
+    .auth-input:focus { border-color: var(--accent1); }
+    .auth-input::placeholder { color: var(--muted); }
+
+    .auth-btn {
+      width: 100%;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      color: #fff;
+      font-family: var(--font-body);
+      font-weight: 900;
+      font-size: .8rem;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+      padding: 1rem;
+      border-radius: 1rem;
+      transition: opacity .2s, transform .1s;
+      box-shadow: 0 8px 32px rgba(249,115,22,.25);
+    }
+    .auth-btn:hover  { opacity: .9; }
+    .auth-btn:active { transform: scale(.97); }
+
+    .auth-toggle {
+      width: 100%;
+      text-align: center;
+      color: var(--muted);
+      font-size: .75rem;
+      margin-top: 1rem;
+      transition: color .2s;
+    }
+    .auth-toggle:hover { color: var(--text); }
+
+    .auth-fine {
+      text-align: center;
+      color: #27272a;
+      font-size: .65rem;
+      margin-top: 2rem;
+      line-height: 1.6;
+    }
+
+    /* ────────────────────────────────────────────────────────────────
+       MAIN APP SCREENS
+    ──────────────────────────────────────────────────────────────── */
+    #screen-main { display: none; flex-direction: column; min-height: 100dvh; }
+    #screen-main.active { display: flex; }
+
+    /* ── Header ─────────────────────────────────────────────────────── */
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(9,9,11,.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: .8rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: .75rem;
+    }
+    .header-logo {
+      font-family: var(--font-display);
+      font-size: 1.7rem;
+      letter-spacing: 2px;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .timer-pill {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: .3rem .75rem;
+      font-size: .68rem;
+      font-weight: 700;
+      color: var(--accent1);
+    }
+    .camera-btn {
+      width: 2.5rem; height: 2.5rem;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      border-radius: 50%;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(249,115,22,.35);
+      transition: transform .15s;
+    }
+    .camera-btn:active { transform: scale(.88); }
+
+    /* ── Tab content ─────────────────────────────────────────────────── */
+    .tab-content { display: none; flex: 1; overflow-y: auto; padding-bottom: 7rem; }
+    .tab-content.active { display: block; }
+
+    /* ── Stories strip ───────────────────────────────────────────────── */
+    .stories-strip {
+      display: flex;
+      gap: .75rem;
+      overflow-x: auto;
+      padding: .75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      scrollbar-width: none;
+    }
+    .stories-strip::-webkit-scrollbar { display: none; }
+
+    .story-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .35rem;
+      flex-shrink: 0;
+      background: none;
+      border: none;
+      padding: 0;
+    }
+    .story-ring {
+      width: 4rem; height: 4rem;
+      border-radius: 50%;
+      padding: 2px;
+      background: linear-gradient(135deg, #facc15, var(--accent1), var(--accent2));
+    }
+    .story-ring.seen { background: var(--border); }
+    .story-ring-inner {
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid var(--bg);
+    }
+    .story-ring-inner img { width: 100%; height: 100%; object-fit: cover; }
+    .story-label {
+      font-size: .6rem;
+      color: var(--muted);
+      max-width: 4rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+    .story-add-ring {
+      width: 4rem; height: 4rem;
+      border-radius: 50%;
+      border: 2px dashed var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      background: var(--surface);
+      transition: border-color .2s;
+    }
+    .story-add-ring:hover { border-color: var(--accent1); }
+
+    /* ── Post card ───────────────────────────────────────────────────── */
+    .post-card {
+      border-bottom: 1px solid var(--border);
+      animation: fadeUp .4s ease both;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .post-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: .75rem 1rem;
+    }
+    .post-avatar-wrap {
+      width: 2.25rem; height: 2.25rem;
+      border-radius: 50%;
+      padding: 1.5px;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      flex-shrink: 0;
+    }
+    .post-avatar-inner {
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      overflow: hidden;
+      background: var(--bg);
+      border: 1.5px solid var(--bg);
+    }
+    .post-avatar-inner img { width: 100%; height: 100%; object-fit: cover; }
+    .post-handle { font-weight: 700; font-size: .85rem; }
+    .post-meta   { font-size: .65rem; color: var(--muted); }
+    .post-more   { color: var(--muted); font-size: 1.2rem; font-weight: 700; }
+
+    .post-image-wrap { position: relative; overflow: hidden; background: var(--surface); }
+    .post-image-wrap img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+
+    .heart-burst {
+      position: absolute;
+      inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 5rem;
+      pointer-events: none;
+      animation: heartPop .7s ease both;
+    }
+    @keyframes heartPop {
+      0%   { opacity: 0; transform: scale(.4); }
+      40%  { opacity: 1; transform: scale(1.3); }
+      70%  { opacity: 1; transform: scale(.95); }
+      100% { opacity: 0; transform: scale(1.1); }
+    }
+
+    .post-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: .75rem 1rem .4rem;
+    }
+    .action-btn { font-size: 1.4rem; transition: transform .15s; }
+    .action-btn:active { transform: scale(1.3); }
+    .expiry-pill {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      background: var(--surface);
+      border-radius: 999px;
+      padding: .2rem .6rem;
+      font-size: .65rem;
+      font-weight: 700;
+      color: var(--accent1);
+    }
+
+    .post-likes    { padding: 0 1rem; font-size: .85rem; font-weight: 700; }
+    .post-caption  { padding: .25rem 1rem .5rem; font-size: .85rem; }
+    .post-caption b { font-weight: 700; }
+    .post-caption span { color: #d4d4d8; }
+    .view-comments-btn {
+      padding: 0 1rem .6rem;
+      font-size: .75rem;
+      color: var(--muted);
+      display: block;
+    }
+
+    /* Comments drawer */
+    .comments-drawer {
+      border-top: 1px solid rgba(255,255,255,.05);
+      background: rgba(9,9,11,.5);
+      padding: .75rem 1rem;
+    }
+    .comment-list { max-height: 10rem; overflow-y: auto; margin-bottom: .75rem; }
+    .comment-item {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: .6rem;
+      align-items: flex-start;
+    }
+    .comment-avatar {
+      width: 1.5rem; height: 1.5rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent3), var(--accent2));
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .comment-handle { font-size: .72rem; font-weight: 700; }
+    .comment-text   { font-size: .72rem; color: #d4d4d8; }
+    .comment-time   { font-size: .6rem;  color: var(--muted); margin-top: 2px; }
+
+    .comment-input-row {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .comment-user-dot {
+      width: 1.75rem; height: 1.75rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent1), var(--accent3));
+      flex-shrink: 0;
+    }
+    .comment-input {
+      flex: 1;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 999px;
+      padding: .4rem .9rem;
+      font-size: .75rem;
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s;
+    }
+    .comment-input:focus { border-color: var(--accent1); }
+    .comment-post-btn {
+      color: var(--accent1);
+      font-size: .75rem;
+      font-weight: 700;
+    }
+
+    /* Empty state */
+    .empty-state {
+      padding: 4rem 1rem;
+      text-align: center;
+      opacity: .25;
+    }
+    .empty-icon { font-size: 3.5rem; color: var(--accent1); margin-bottom: .75rem; }
+
+    /* ────────────────────────────────────────────────────────────────
+       EXPLORE TAB
+    ──────────────────────────────────────────────────────────────── */
+    .explore-heading {
+      padding: .75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .explore-heading span { font-size: 1.1rem; font-weight: 900; font-style: italic; color: var(--accent1); }
+    .explore-heading small { font-size: .7rem; color: var(--muted); }
+
+    .explore-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 0 2px; }
+    .explore-cell { position: relative; aspect-ratio: 1; overflow: hidden; background: var(--surface); }
+    .explore-cell img { width: 100%; height: 100%; object-fit: cover; transition: transform .3s; }
+    .explore-cell:hover img { transform: scale(1.06); }
+    .explore-badge {
+      position: absolute;
+      top: 6px; left: 6px;
+      background: var(--accent1);
+      border-radius: 999px;
+      padding: 2px 7px;
+      font-size: .6rem;
+      font-weight: 900;
+    }
+
+    /* ────────────────────────────────────────────────────────────────
+       LEADERBOARD TAB
+    ──────────────────────────────────────────────────────────────── */
+    .lb-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1rem .75rem;
+    }
+    .lb-title { font-size: 1.2rem; font-weight: 900; }
+    .lb-reset-pill {
+      font-size: .7rem;
+      color: var(--muted);
+      background: var(--surface);
+      border-radius: 999px;
+      padding: .25rem .75rem;
+    }
+    .lb-list { padding: 0 1rem; display: flex; flex-direction: column; gap: .5rem; }
+    .lb-row {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .75rem;
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+      background: rgba(24,24,27,.5);
+    }
+    .lb-row.top { border-color: rgba(249,115,22,.4); background: rgba(249,115,22,.08); }
+    .lb-badge  { font-size: 1.4rem; width: 2rem; text-align: center; }
+    .lb-avatar {
+      width: 2.5rem; height: 2.5rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      padding: 1.5px;
+    }
+    .lb-avatar-inner {
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      background: var(--surface);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+    }
+    .lb-info { flex: 1; }
+    .lb-name   { font-size: .85rem; font-weight: 700; }
+    .lb-handle { font-size: .7rem;  color: var(--muted); }
+    .lb-stats  { text-align: right; }
+    .lb-likes  { font-size: .85rem; font-weight: 900; color: var(--accent1); }
+    .lb-snaps  { font-size: .65rem; color: var(--muted); }
+    .lb-you-row {
+      margin-top: .75rem;
+      border: 1.5px dashed var(--border);
+      border-radius: 1rem;
+      text-align: center;
+      padding: .75rem;
+    }
+    .lb-you-text  { font-size: .85rem; color: #a1a1aa; }
+    .lb-you-sub   { font-size: .7rem;  color: var(--muted); margin-top: 2px; }
+    .lb-you-rank  { color: var(--accent1); font-weight: 700; }
+
+    /* ────────────────────────────────────────────────────────────────
+       PROFILE TAB
+    ──────────────────────────────────────────────────────────────── */
+    .profile-banner {
+      height: 7rem;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2), var(--accent3));
+      position: relative;
+    }
+    .profile-avatar-wrap {
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translate(-50%, 50%);
+      width: 5rem; height: 5rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      padding: 2.5px;
+    }
+    .profile-avatar-inner {
+      width: 100%; height: 100%;
+      border-radius: 50%;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem;
+    }
+    .profile-info {
+      padding-top: 3.5rem;
+      text-align: center;
+      padding-bottom: .5rem;
+    }
+    .profile-name   { font-size: 1.2rem; font-weight: 900; }
+    .profile-handle { font-size: .8rem;  color: var(--muted); }
+    .profile-stats {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+      padding: .75rem 1rem 1rem;
+    }
+    .stat-val { font-size: 1.1rem; font-weight: 900; text-align: center; }
+    .stat-lbl { font-size: .65rem; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; text-align: center; }
+
+    .profile-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; padding: 0 2px; }
+    .profile-cell { aspect-ratio: 1; overflow: hidden; background: var(--surface); }
+    .profile-cell img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-empty { text-align: center; padding: 4rem 1rem; opacity: .3; }
+    .profile-empty p { font-size: .85rem; font-weight: 700; margin-top: .5rem; }
+
+    .logout-btn {
+      width: calc(100% - 2rem);
+      margin: 1.25rem 1rem;
+      border: 1.5px solid var(--border);
+      border-radius: 1rem;
+      padding: .85rem;
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-align: center;
+      transition: border-color .2s, color .2s;
+    }
+    .logout-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+    /* ────────────────────────────────────────────────────────────────
+       BOTTOM NAV
+    ──────────────────────────────────────────────────────────────── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 92%;
+      max-width: 380px;
+      background: rgba(24,24,27,.9);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,.06);
+      border-radius: 1.5rem;
+      display: flex;
+      justify-content: space-around;
+      padding: .75rem 0;
+      z-index: 50;
+      box-shadow: 0 16px 48px rgba(0,0,0,.6);
+    }
+    .nav-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .25rem;
+      padding: 0 .75rem;
+      opacity: .35;
+      transition: opacity .2s, transform .15s;
+    }
+    .nav-btn.active { opacity: 1; }
+    .nav-btn:active { transform: scale(.9); }
+    .nav-icon  { font-size: 1.3rem; }
+    .nav-label {
+      font-size: .55rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+    }
+    .nav-btn.active .nav-label { color: var(--accent1); }
+    .nav-btn.active .nav-icon  { transform: scale(1.15); }
+
+    /* ────────────────────────────────────────────────────────────────
+       STORY VIEWER OVERLAY
+    ──────────────────────────────────────────────────────────────── */
+    #story-viewer {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: #000;
+      display: none;
+      flex-direction: column;
+    }
+    #story-viewer.open { display: flex; }
+
+    .story-progress-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: rgba(255,255,255,.2);
+      z-index: 10;
+    }
+    .story-progress-fill {
+      height: 100%;
+      background: #fff;
+      transition: width .1s linear;
+      width: 0%;
+    }
+    .story-viewer-header {
+      position: absolute;
+      top: .75rem; left: .75rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      z-index: 10;
+    }
+    .story-viewer-avatar {
+      width: 2rem; height: 2rem;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.3);
+    }
+    .story-viewer-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .story-viewer-handle { font-size: .85rem; font-weight: 700; color: #fff; }
+    .story-viewer-time   { font-size: .7rem;  color: rgba(255,255,255,.5); }
+    .story-close {
+      position: absolute;
+      top: .75rem; right: .75rem;
+      font-size: 1.3rem;
+      color: #fff;
+      z-index: 10;
+      width: 2rem; height: 2rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #story-viewer img.story-bg {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    .story-reply-bar {
+      position: absolute;
+      bottom: 2rem; left: 0; right: 0;
+      display: flex; justify-content: center;
+    }
+    .story-reply-inner {
+      background: rgba(255,255,255,.12);
+      backdrop-filter: blur(16px);
+      border-radius: 999px;
+      padding: .65rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+    .story-reply-inner input {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: .85rem;
+      outline: none;
+      width: 9rem;
+    }
+    .story-reply-inner input::placeholder { color: rgba(255,255,255,.5); }
+
+    /* ────────────────────────────────────────────────────────────────
+       UPLOAD OVERLAY
+    ──────────────────────────────────────────────────────────────── */
+    #upload-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.85);
+      backdrop-filter: blur(8px);
+      z-index: 70;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+    }
+    #upload-overlay.open { display: flex; }
+    .upload-spinner {
+      width: 4rem; height: 4rem;
+      border: 4px solid var(--accent1);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .upload-label {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      letter-spacing: .15em;
+      color: var(--accent1);
+    }
+
+    /* ────────────────────────────────────────────────────────────────
+       TOAST
+    ──────────────────────────────────────────────────────────────── */
+    #toast {
+      position: fixed;
+      top: 5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: .85rem;
+      font-weight: 700;
+      padding: .65rem 1.25rem;
+      border-radius: 1rem;
+      z-index: 80;
+      opacity: 0;
+      transition: opacity .25s, transform .25s;
+      white-space: nowrap;
+      pointer-events: none;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ────────────────────────────────────────────────────────────────
+       RESPONSIVE — hides side borders on narrow viewports
+    ──────────────────────────────────────────────────────────────── */
+    @media (max-width: 430px) {
+      #app { border: none; }
+    }
+  </style>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       AUTH SCREEN
+  ══════════════════════════════════════════════════════════════════ -->
+  <div id="screen-auth">
+    <div class="inner">
+      <h1 class="auth-logo">DogSnap</h1>
+      <p class="auth-tagline">Ephemeral Pups &bull; 24H Only</p>
+
+      <input id="auth-name"   class="auth-input" type="text" placeholder="Dog's Name" autocomplete="off" />
+      <input id="auth-handle" class="auth-input" type="text" placeholder="@handle (e.g. @goldie_pup)" autocomplete="off" />
+      <button class="auth-btn" id="auth-btn">Join the Pack 🐾</button>
+      <button class="auth-toggle" id="auth-toggle-btn">New pup? Sign up here</button>
+
+      <p class="auth-fine">
+        Your snaps vanish after 24 hours.<br/>
+        Serverless identity — no passwords stored.
+      </p>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       MAIN APP
+  ══════════════════════════════════════════════════════════════════ -->
+  <div id="screen-main">
+
+    <!-- Header -->
+    <header class="app-header">
+      <span class="header-logo">DogSnap</span>
+      <div class="timer-pill">⏳ <span id="header-timer">--h --m</span></div>
+      <button class="camera-btn" id="camera-btn">📸</button>
+      <!-- Hidden file input triggered by the camera button -->
+      <input type="file" id="file-input" accept="image/*" capture="environment" style="display:none" />
+    </header>
+
+    <!-- ── HOME TAB ──────────────────────────────────────────────── -->
+    <div id="tab-home" class="tab-content active">
+      <!-- Stories -->
+      <div class="stories-strip" id="stories-strip">
+        <!-- "Add your story" button -->
+        <button class="story-item" id="add-story-btn">
+          <div class="story-add-ring">➕</div>
+          <span class="story-label">You</span>
+        </button>
+        <!-- Mock story items injected by JS -->
+      </div>
+
+      <!-- Feed posts injected by JS -->
+      <div id="feed-container"></div>
+    </div>
+
+    <!-- ── EXPLORE TAB ───────────────────────────────────────────── -->
+    <div id="tab-explore" class="tab-content">
+      <div class="explore-heading">
+        <span>🔥 Trending</span>
+        <small>in the last 24h</small>
+      </div>
+      <div class="explore-grid" id="explore-grid">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+
+    <!-- ── LEADERBOARD TAB ───────────────────────────────────────── -->
+    <div id="tab-leaderboard" class="tab-content">
+      <div class="lb-header">
+        <h2 class="lb-title">Top Packs 🏆</h2>
+        <span class="lb-reset-pill">Resets in <span id="lb-timer">--h --m</span></span>
+      </div>
+      <div class="lb-list" id="lb-list">
+        <!-- Injected by JS -->
+      </div>
+    </div>
+
+    <!-- ── PROFILE TAB ───────────────────────────────────────────── -->
+    <div id="tab-profile" class="tab-content">
+      <div class="profile-banner">
+        <div class="profile-avatar-wrap">
+          <div class="profile-avatar-inner">🐾</div>
+        </div>
+      </div>
+      <div class="profile-info">
+        <p class="profile-name"   id="profile-name">—</p>
+        <p class="profile-handle" id="profile-handle">—</p>
+      </div>
+      <div class="profile-stats">
+        <div><div class="stat-val" id="stat-snaps">0</div><div class="stat-lbl">Snaps</div></div>
+        <div><div class="stat-val" id="stat-likes">0</div><div class="stat-lbl">Woofs</div></div>
+        <div><div class="stat-val" id="stat-left">—</div><div class="stat-lbl">Left</div></div>
+      </div>
+      <div class="profile-grid" id="profile-grid"></div>
+      <div class="profile-empty hidden" id="profile-empty">
+        <p>📸</p>
+        <p>No snaps yet. Get barking!</p>
+      </div>
+      <button class="logout-btn" id="logout-btn">🚪 Leave the Pack</button>
+    </div>
+
+    <!-- ── BOTTOM NAV ────────────────────────────────────────────── -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-tab="home">
+        <span class="nav-icon">🏠</span><span class="nav-label">Home</span>
+      </button>
+      <button class="nav-btn" data-tab="explore">
+        <span class="nav-icon">🔥</span><span class="nav-label">Explore</span>
+      </button>
+      <button class="nav-btn" data-tab="leaderboard">
+        <span class="nav-icon">🏆</span><span class="nav-label">Top Dogs</span>
+      </button>
+      <button class="nav-btn" data-tab="profile">
+        <span class="nav-icon">🐾</span><span class="nav-label">Profile</span>
+      </button>
+    </nav>
+  </div><!-- /screen-main -->
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       STORY VIEWER OVERLAY
+  ══════════════════════════════════════════════════════════════════ -->
+  <div id="story-viewer">
+    <div class="story-progress-bar">
+      <div class="story-progress-fill" id="story-progress"></div>
+    </div>
+    <div class="story-viewer-header">
+      <div class="story-viewer-avatar"><img id="sv-avatar" src="" alt="" /></div>
+      <span class="story-viewer-handle" id="sv-handle"></span>
+      <span class="story-viewer-time">now</span>
+    </div>
+    <button class="story-close" id="story-close">✕</button>
+    <img class="story-bg" id="sv-image" src="" alt="story" />
+    <div class="story-reply-bar">
+      <div class="story-reply-inner">
+        <input type="text" placeholder="Send a woof…" readonly />
+        <button style="font-size:1.1rem">❤️</button>
+        <button style="font-size:1.1rem">✈️</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════
+       UPLOAD OVERLAY
+  ══════════════════════════════════════════════════════════════════ -->
+  <div id="upload-overlay">
+    <div class="upload-spinner"></div>
+    <p class="upload-label">COMPRESSING…</p>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast"></div>
+
+</div><!-- /app -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   ████████████████████████████   DOGSNAP JS   ████████████████████████████
+   ═══════════════════════════════════════════════════════════════════════════
+
+   ARCHITECTURE: "Serverless Identity" — zero backend, zero database cost.
+   User identity lives in localStorage. Images are compressed client-side.
+   The only server needed is a static file host (Cloudflare Pages / Netlify).
+
+   ┌─────────────────────────────────────────────────────────────────────┐
+   │  TO CONNECT A REAL BACKEND — find the sections marked              │
+   │  ── BACKEND HOOK ── and replace the localStorage stub with         │
+   │  a fetch() call to your Cloudflare Worker / Supabase / Firebase.   │
+   └─────────────────────────────────────────────────────────────────────┘
+   ═══════════════════════════════════════════════════════════════════════ */
+
+  /* ── BACKEND CONFIG ────────────────────────────────────────────────────
+     Replace these with your real endpoints once deployed.
+     Cloudflare Worker tutorial: https://developers.cloudflare.com/workers/
+  ──────────────────────────────────────────────────────────────────────── */
+  const CONFIG = {
+    // ── BACKEND HOOK: replace with your Cloudflare Worker URL ──────────
+    WORKER_URL: "https://YOUR_WORKER.YOUR_SUBDOMAIN.workers.dev",
+
+    // ── BACKEND HOOK: replace with your Supabase project URL ───────────
+    SUPABASE_URL: "https://YOUR_PROJECT_ID.supabase.co",
+
+    // ── BACKEND HOOK: replace with your Supabase anon key ──────────────
+    // Safe to expose — Row Level Security policies protect the data.
+    SUPABASE_ANON_KEY: "YOUR_SUPABASE_ANON_KEY",
+
+    // ── BACKEND HOOK: replace with your Cloudflare R2 bucket URL ───────
+    // Used for storing compressed images instead of blob: URLs.
+    R2_PUBLIC_URL: "https://pub-YOUR_ACCOUNT.r2.dev",
+
+    // App-level settings
+    SNAP_TTL_MS: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+    MAX_IMG_WIDTH: 1080,               // pixels — resize before upload
+    IMG_QUALITY: 0.72,                 // WebP quality (0–1)
+    LOCAL_STORAGE_KEY: "dogsnap_user_v2",
+  };
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     MOCK DATA — remove these arrays once your real API is connected
+  ═══════════════════════════════════════════════════════════════════ */
+  const MOCK_STORIES = [
+    { id: 1, handle: "@rex_the_great", image: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=200&q=80", seen: false },
+    { id: 2, handle: "@bella_boop",    image: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=200&q=80", seen: false },
+    { id: 3, handle: "@sir_woofs",     image: "https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=200&q=80", seen: true  },
+    { id: 4, handle: "@mochi_paw",     image: "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=200&q=80", seen: false },
+    { id: 5, handle: "@duke_floof",    image: "https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=200&q=80", seen: true  },
+  ];
+
+  const MOCK_POSTS = [
+    {
+      id: 101, userName: "Rex the Great", userHandle: "@rex_the_great",
+      image: "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=600&q=80",
+      likes: 847, caption: "Morning zoomies activated 🐾", timestamp: "2m ago",
+      comments: [
+        { id: 1, handle: "@bella_boop", text: "SO CUTE omg 😭",       time: "1m"  },
+        { id: 2, handle: "@mochi_paw",  text: "king behavior only 👑", time: "30s" },
+      ],
+    },
+    {
+      id: 102, userName: "Bella Boop", userHandle: "@bella_boop",
+      image: "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&q=80",
+      likes: 1203, caption: "beach day energy 🌊", timestamp: "15m ago",
+      comments: [
+        { id: 1, handle: "@rex_the_great", text: "living the dream!", time: "10m" },
+      ],
+    },
+    {
+      id: 103, userName: "Sir Woofs", userHandle: "@sir_woofs",
+      image: "https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=600&q=80",
+      likes: 502, caption: "judge me", timestamp: "1h ago",
+      comments: [],
+    },
+  ];
+
+  const MOCK_LEADERBOARD = [
+    { rank: 1, handle: "@goldie_sun",    name: "Goldie", snaps: 342, likes: 28401, badge: "🏆" },
+    { rank: 2, handle: "@rex_the_great", name: "Rex",    snaps: 201, likes: 19200, badge: "🥈" },
+    { rank: 3, handle: "@bella_boop",    name: "Bella",  snaps: 189, likes: 15600, badge: "🥉" },
+    { rank: 4, handle: "@mochi_paw",     name: "Mochi",  snaps: 156, likes: 12400, badge: "🐾" },
+    { rank: 5, handle: "@duke_floof",    name: "Duke",   snaps: 134, likes:  9800, badge: "🐾" },
+  ];
+
+  const EXPLORE_IMAGES = [
+    "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=400&q=70",
+    "https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=400&q=70",
+    "https://images.unsplash.com/photo-1477884213360-7e9d7dcc1e48?w=400&q=70",
+    "https://images.unsplash.com/photo-1517849845537-4d257902454a?w=400&q=70",
+    "https://images.unsplash.com/photo-1425082661705-1834bfd09dca?w=400&q=70",
+    "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=400&q=70",
+    "https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=400&q=70",
+    "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=400&q=70",
+    "https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?w=400&q=70",
+  ];
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     APP STATE
+  ═══════════════════════════════════════════════════════════════════ */
+  let currentUser   = null;   // { id, name, handle, joinedAt }
+  let feed          = [...MOCK_POSTS];
+  let stories       = [...MOCK_STORIES];
+  let storyTimer    = null;   // setInterval handle for story progress
+  let isSignupMode  = false;
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     HELPERS
+  ═══════════════════════════════════════════════════════════════════ */
+
+  /** Returns "Xh Ym" until midnight (when all snaps expire). */
+  function timeUntilExpiry() {
+    const now   = new Date();
+    const hrs   = 23 - now.getHours();
+    const mins  = 59 - now.getMinutes();
+    return `${hrs}h ${mins}m`;
+  }
+
+  /** Show a floating toast message for 2.5 seconds. */
+  function showToast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 2500);
+  }
+
+  /**
+   * Client-side image compression.
+   * Resizes to MAX_IMG_WIDTH px and re-encodes as WebP at IMG_QUALITY.
+   * This alone cuts typical mobile photos from ~4 MB → ~150 KB — a
+   * 96 % bandwidth saving that makes the app free to run at scale.
+   *
+   * ── BACKEND HOOK ────────────────────────────────────────────────────
+   * After getting `blob` here, upload it to Cloudflare R2:
+   *   const form = new FormData();
+   *   form.append('file', blob, 'snap.webp');
+   *   const res  = await fetch(`${CONFIG.WORKER_URL}/upload`, { method:'POST', body: form });
+   *   const { url } = await res.json();   // permanent R2 URL
+   * ────────────────────────────────────────────────────────────────── */
+  function compressImage(file, callback) {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.src = objectUrl;
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const scale  = Math.min(CONFIG.MAX_IMG_WIDTH / img.width, CONFIG.MAX_IMG_WIDTH / img.height, 1);
+      canvas.width  = img.width  * scale;
+      canvas.height = img.height * scale;
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        URL.revokeObjectURL(objectUrl); // free memory
+        callback(blob);
+      }, "image/webp", CONFIG.IMG_QUALITY);
+    };
+  }
+
+  /** Format a large number with commas: 1203 → "1,203" */
+  function fmt(n) { return Number(n).toLocaleString(); }
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     AUTH — localStorage-based "Serverless Identity"
+     ══════════════════════════════════════════════════════════════════
+     HOW IT WORKS:
+       1. User types a name + handle (no password).
+       2. We generate a random ID and store it in localStorage.
+       3. On every page load we read it back — that's the "login".
+       4. The Cloudflare Worker (CONFIG.WORKER_URL) can verify the ID
+          by checking a KV store, giving a tamper-resistant identity
+          without a database.
+
+     ── BACKEND HOOK ────────────────────────────────────────────────────
+     Replace the localStorage lines below with a fetch() to your Worker:
+       const res  = await fetch(`${CONFIG.WORKER_URL}/register`, {
+         method: 'POST',
+         body: JSON.stringify({ name, handle }),
+         headers: { 'Content-Type': 'application/json' }
+       });
+       const user = await res.json();  // Worker returns { id, name, handle, token }
+       localStorage.setItem(CONFIG.LOCAL_STORAGE_KEY, JSON.stringify(user));
+     ────────────────────────────────────────────────────────────────── */
+  function loadUser() {
+    try {
+      const raw = localStorage.getItem(CONFIG.LOCAL_STORAGE_KEY);
+      if (raw) currentUser = JSON.parse(raw);
+    } catch (_) {
+      currentUser = null; // corrupted storage — start fresh
+    }
+  }
+
+  function saveUser(user) {
+    localStorage.setItem(CONFIG.LOCAL_STORAGE_KEY, JSON.stringify(user));
+    currentUser = user;
+  }
+
+  function handleAuth() {
+    const name   = document.getElementById("auth-name").value.trim();
+    const handle = document.getElementById("auth-handle").value.trim();
+
+    if (!name || !handle) { showToast("Fill in both fields! 🐾"); return; }
+
+    const user = {
+      id:       Math.random().toString(36).slice(2, 11),
+      name,
+      handle:   handle.startsWith("@") ? handle : `@${handle}`,
+      joinedAt: Date.now(),
+    };
+
+    saveUser(user);
+    bootApp();
+    showToast("Welcome to the pack! 🎉");
+  }
+
+  function handleLogout() {
+    localStorage.removeItem(CONFIG.LOCAL_STORAGE_KEY);
+    currentUser = null;
+    document.getElementById("screen-main").classList.remove("active");
+    document.getElementById("screen-auth").style.display = "flex";
+    // Clear inputs for next login
+    document.getElementById("auth-name").value   = "";
+    document.getElementById("auth-handle").value = "";
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     RENDER — STORIES STRIP
+  ═══════════════════════════════════════════════════════════════════ */
+  function renderStories() {
+    const strip = document.getElementById("stories-strip");
+    // Keep the "add your story" button (first child), remove the rest
+    while (strip.children.length > 1) strip.removeChild(strip.lastChild);
+
+    stories.forEach(s => {
+      const btn = document.createElement("button");
+      btn.className = "story-item";
+      btn.innerHTML = `
+        <div class="story-ring ${s.seen ? "seen" : ""}">
+          <div class="story-ring-inner"><img src="${s.image}" alt="${s.handle}" loading="lazy"/></div>
+        </div>
+        <span class="story-label">${s.handle.replace("@","")}</span>`;
+
+      btn.addEventListener("click", () => {
+        // Mark as seen
+        s.seen = true;
+        btn.querySelector(".story-ring").classList.add("seen");
+        openStoryViewer(s);
+      });
+
+      strip.appendChild(btn);
+    });
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     RENDER — STORY VIEWER
+  ═══════════════════════════════════════════════════════════════════ */
+  function openStoryViewer(story) {
+    document.getElementById("sv-avatar").src = story.image;
+    document.getElementById("sv-handle").textContent = story.handle;
+    document.getElementById("sv-image").src = story.image;
+
+    const fill = document.getElementById("story-progress");
+    fill.style.width = "0%";
+    document.getElementById("story-viewer").classList.add("open");
+
+    // Auto-advance: fill the progress bar over 6 seconds
+    let pct = 0;
+    clearInterval(storyTimer);
+    storyTimer = setInterval(() => {
+      pct += 100 / 60; // 6000ms / 100ms tick = 60 steps
+      fill.style.width = Math.min(pct, 100) + "%";
+      if (pct >= 100) closeStoryViewer();
+    }, 100);
+  }
+
+  function closeStoryViewer() {
+    clearInterval(storyTimer);
+    document.getElementById("story-viewer").classList.remove("open");
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     RENDER — FEED
+     ══════════════════════════════════════════════════════════════════
+     ── BACKEND HOOK ────────────────────────────────────────────────────
+     Replace the MOCK_POSTS array with a real API call:
+       const res   = await fetch(`${CONFIG.WORKER_URL}/feed`);
+       feed        = await res.json();
+       renderFeed();
+     ────────────────────────────────────────────────────────────────── */
+  function renderFeed() {
+    const container = document.getElementById("feed-container");
+    container.innerHTML = "";
+
+    if (feed.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🦴</div>
+          <p style="font-weight:700">No snaps in your area.<br/>Be the first to bark!</p>
+        </div>`;
+      return;
+    }
+
+    feed.forEach(post => container.appendChild(buildPostCard(post)));
+  }
+
+  /**
+   * Build a single post card DOM element with all interactions.
+   * Double-tap to like, comment drawer, expiry pill, etc.
+   */
+  function buildPostCard(post) {
+    // Each post tracks its own mutable state via closure variables
+    let liked       = false;
+    let localLikes  = post.likes;
+    let comments    = [...post.comments];
+    let showComments = false;
+
+    const article = document.createElement("article");
+    article.className = "post-card";
+
+    // ── Render function for this card (called on state change) ───────
+    function render() {
+      article.innerHTML = `
+        <!-- Header row -->
+        <div class="post-header">
+          <div style="display:flex;align-items:center;gap:.6rem">
+            <div class="post-avatar-wrap">
+              <div class="post-avatar-inner">
+                <img src="${post.image}" alt="${post.userHandle}" loading="lazy"/>
+              </div>
+            </div>
+            <div>
+              <p class="post-handle">${post.userHandle}</p>
+              <p class="post-meta">${post.timestamp} • expires in ${timeUntilExpiry()}</p>
+            </div>
+          </div>
+          <button class="post-more">⋯</button>
+        </div>
+
+        <!-- Image — double-tap to like ──────────────────────────── -->
+        <div class="post-image-wrap" id="img-wrap-${post.id}">
+          <img src="${post.image}" alt="snap" loading="lazy"/>
+        </div>
+
+        <!-- Action bar -->
+        <div class="post-actions">
+          <button class="action-btn" id="like-btn-${post.id}">${liked ? "❤️" : "🤍"}</button>
+          <button class="action-btn" id="comment-btn-${post.id}">💬</button>
+          <button class="action-btn">✈️</button>
+          <div class="expiry-pill">⏳ ${timeUntilExpiry()}</div>
+        </div>
+
+        <!-- Likes + caption -->
+        <p class="post-likes">${fmt(localLikes)} woofs</p>
+        ${post.caption ? `
+          <p class="post-caption">
+            <b>${post.userHandle}</b>
+            <span>${post.caption}</span>
+          </p>` : ""}
+
+        ${!showComments && comments.length > 0 ? `
+          <button class="view-comments-btn" id="view-comments-${post.id}">
+            View all ${comments.length} comment${comments.length > 1 ? "s" : ""}
+          </button>` : ""}
+
+        <!-- Comments drawer (toggled) -->
+        ${showComments ? `
+          <div class="comments-drawer">
+            <div class="comment-list" id="comment-list-${post.id}">
+              ${comments.map(c => `
+                <div class="comment-item">
+                  <div class="comment-avatar"></div>
+                  <div>
+                    <span class="comment-handle">${c.handle}</span>
+                    <span class="comment-text"> ${c.text}</span>
+                    <p class="comment-time">${c.time}</p>
+                  </div>
+                </div>`).join("")}
+            </div>
+            ${currentUser ? `
+              <div class="comment-input-row">
+                <div class="comment-user-dot"></div>
+                <input class="comment-input" id="comment-input-${post.id}"
+                       placeholder="Add a comment…" type="text" />
+                <button class="comment-post-btn" id="comment-post-${post.id}">Post</button>
+              </div>` : ""}
+          </div>` : ""}
+      `;
+
+      // ── Wire up events after re-render ───────────────────────────
+
+      // Like button
+      const likeBtn = article.querySelector(`#like-btn-${post.id}`);
+      likeBtn.addEventListener("click", () => {
+        liked      = !liked;
+        localLikes = liked ? localLikes + 1 : localLikes - 1;
+        /* ── BACKEND HOOK: POST a like to your Worker ─────────────
+           fetch(`${CONFIG.WORKER_URL}/like`, {
+             method: 'POST',
+             body: JSON.stringify({ postId: post.id, userId: currentUser.id }),
+             headers: { 'Content-Type': 'application/json' }
+           });
+        ──────────────────────────────────────────────────────────── */
+        render();
+      });
+
+      // Double-tap to like on the image
+      let lastTap = 0;
+      const imgWrap = article.querySelector(`#img-wrap-${post.id}`);
+      imgWrap.addEventListener("click", () => {
+        const now = Date.now();
+        if (now - lastTap < 300 && !liked) {
+          liked      = true;
+          localLikes = localLikes + 1;
+          // Show the burst heart animation
+          const burst = document.createElement("div");
+          burst.className = "heart-burst";
+          burst.textContent = "❤️";
+          imgWrap.appendChild(burst);
+          setTimeout(() => burst.remove(), 750);
+          render();
+        }
+        lastTap = now;
+      });
+
+      // Toggle comments drawer
+      const commentBtn     = article.querySelector(`#comment-btn-${post.id}`);
+      const viewCommentsBtn = article.querySelector(`#view-comments-${post.id}`);
+      const toggleComments = () => { showComments = !showComments; render(); };
+      commentBtn.addEventListener("click", toggleComments);
+      if (viewCommentsBtn) viewCommentsBtn.addEventListener("click", () => { showComments = true; render(); });
+
+      // Submit new comment
+      if (showComments && currentUser) {
+        const input    = article.querySelector(`#comment-input-${post.id}`);
+        const postBtn  = article.querySelector(`#comment-post-${post.id}`);
+        const submit   = () => {
+          const text = input.value.trim();
+          if (!text) return;
+          comments.push({ id: Date.now(), handle: currentUser.handle, text, time: "now" });
+          input.value = "";
+          /* ── BACKEND HOOK: POST comment to Worker ─────────────────
+             fetch(`${CONFIG.WORKER_URL}/comment`, {
+               method: 'POST',
+               body: JSON.stringify({ postId: post.id, userId: currentUser.id, text }),
+               headers: { 'Content-Type': 'application/json' }
+             });
+          ────────────────────────────────────────────────────────── */
+          render();
+        };
+        postBtn.addEventListener("click", submit);
+        input.addEventListener("keydown", e => { if (e.key === "Enter") submit(); });
+      }
+    }
+
+    render(); // Initial render
+    return article;
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     RENDER — EXPLORE GRID
+  ═══════════════════════════════════════════════════════════════════ */
+  function renderExplore() {
+    const grid = document.getElementById("explore-grid");
+    grid.innerHTML = EXPLORE_IMAGES.map((src, i) => `
+      <div class="explore-cell">
+        <img src="${src}" alt="explore ${i+1}" loading="lazy"/>
+        ${i === 0 ? `<div class="explore-badge">#1</div>` : ""}
+      </div>`).join("");
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     RENDER — LEADERBOARD
+     ── BACKEND HOOK ────────────────────────────────────────────────────
+     Replace MOCK_LEADERBOARD with:
+       const res  = await fetch(`${CONFIG.WORKER_URL}/leaderboard`);
+       const data = await res.json();
+       renderLeaderboard(data);
+     ────────────────────────────────────────────────────────────────── */
+  function renderLeaderboard() {
+    document.getElementById("lb-timer").textContent = timeUntilExpiry();
+    const list = document.getElementById("lb-list");
+    list.innerHTML = MOCK_LEADERBOARD.map((dog, i) => `
+      <div class="lb-row ${i === 0 ? "top" : ""}">
+        <span class="lb-badge">${dog.badge}</span>
+        <div class="lb-avatar">
+          <div class="lb-avatar-inner">🐾</div>
+        </div>
+        <div class="lb-info">
+          <p class="lb-name">${dog.name}</p>
+          <p class="lb-handle">${dog.handle}</p>
+        </div>
+        <div class="lb-stats">
+          <p class="lb-likes">${fmt(dog.likes)}</p>
+          <p class="lb-snaps">${dog.snaps} snaps</p>
+        </div>
+      </div>`).join("") + `
+      <div class="lb-you-row">
+        <p class="lb-you-text">You're <span class="lb-you-rank">#42</span> today</p>
+        <p class="lb-you-sub">Post more snaps to climb! 🐾</p>
+      </div>`;
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     RENDER — PROFILE
+  ═══════════════════════════════════════════════════════════════════ */
+  function renderProfile() {
+    if (!currentUser) return;
+
+    document.getElementById("profile-name").textContent   = currentUser.name;
+    document.getElementById("profile-handle").textContent = currentUser.handle;
+    document.getElementById("stat-left").textContent      = timeUntilExpiry();
+
+    const userPosts  = feed.filter(p => p.userHandle === currentUser.handle);
+    const totalLikes = userPosts.reduce((sum, p) => sum + p.likes, 0);
+
+    document.getElementById("stat-snaps").textContent = userPosts.length;
+    document.getElementById("stat-likes").textContent = fmt(totalLikes);
+
+    const grid  = document.getElementById("profile-grid");
+    const empty = document.getElementById("profile-empty");
+
+    if (userPosts.length === 0) {
+      grid.innerHTML = "";
+      empty.classList.remove("hidden");
+    } else {
+      empty.classList.add("hidden");
+      grid.innerHTML = userPosts.map(p => `
+        <div class="profile-cell">
+          <img src="${p.image}" alt="snap" loading="lazy"/>
+        </div>`).join("");
+    }
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     IMAGE UPLOAD FLOW
+  ═══════════════════════════════════════════════════════════════════ */
+  function handleFileSelected(e) {
+    const file = e.target.files[0];
+    if (!file || !currentUser) return;
+
+    document.getElementById("upload-overlay").classList.add("open");
+
+    compressImage(file, blob => {
+      if (!blob) {
+        document.getElementById("upload-overlay").classList.remove("open");
+        showToast("Compression failed 😕");
+        return;
+      }
+
+      /* ── BACKEND HOOK ─────────────────────────────────────────────
+         Upload `blob` to Cloudflare R2 via your Worker and get a
+         permanent URL back. Replace the blob: URL below:
+
+         const form = new FormData();
+         form.append("file", blob, `snap-${Date.now()}.webp`);
+         const res  = await fetch(`${CONFIG.WORKER_URL}/upload`, { method:"POST", body: form });
+         const { url } = await res.json(); // e.g. "https://pub-xxx.r2.dev/snap-123.webp"
+         const imageUrl = url;
+
+         Then also save the post metadata:
+         await fetch(`${CONFIG.WORKER_URL}/posts`, {
+           method: "POST",
+           headers: { "Content-Type": "application/json" },
+           body: JSON.stringify({ userId: currentUser.id, imageUrl, caption: "" })
+         });
+      ──────────────────────────────────────────────────────────────── */
+      const imageUrl = URL.createObjectURL(blob); // ← replace with R2 URL
+
+      const newPost = {
+        id:          Date.now(),
+        userName:    currentUser.name,
+        userHandle:  currentUser.handle,
+        image:       imageUrl,
+        likes:       0,
+        caption:     "",
+        timestamp:   "just now",
+        comments:    [],
+        expiresAt:   Date.now() + CONFIG.SNAP_TTL_MS,
+      };
+
+      feed.unshift(newPost); // add to top of feed
+
+      document.getElementById("upload-overlay").classList.remove("open");
+      switchTab("home");
+      renderFeed();
+      showToast("Snap posted! 📸");
+    });
+
+    e.target.value = ""; // reset so same file can be re-selected
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     TABS — switch between Home / Explore / Leaderboard / Profile
+  ═══════════════════════════════════════════════════════════════════ */
+  function switchTab(tabName) {
+    // Update content visibility
+    document.querySelectorAll(".tab-content").forEach(el => el.classList.remove("active"));
+    document.getElementById(`tab-${tabName}`).classList.add("active");
+
+    // Update nav button active state
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.tab === tabName);
+    });
+
+    // Lazy-render tab content on first visit
+    if (tabName === "profile")     renderProfile();
+    if (tabName === "leaderboard") renderLeaderboard();
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     TIMER — update all expiry clocks every 60 seconds
+  ═══════════════════════════════════════════════════════════════════ */
+  function startTimer() {
+    const tick = () => {
+      const t = timeUntilExpiry();
+      const el = document.getElementById("header-timer");
+      if (el) el.textContent = t;
+      const lb = document.getElementById("lb-timer");
+      if (lb) lb.textContent = t;
+      const sl = document.getElementById("stat-left");
+      if (sl) sl.textContent = t;
+    };
+    tick();
+    setInterval(tick, 60_000);
+  }
+
+
+  /* ═══════════════════════════════════════════════════════════════════
+     BOOT — wire up all events and show the right screen
+  ═══════════════════════════════════════════════════════════════════ */
+  function bootApp() {
+    if (!currentUser) return;
+
+    // Show main screen, hide auth
+    document.getElementById("screen-auth").style.display = "none";
+    document.getElementById("screen-main").classList.add("active");
+
+    // Render initial data
+    renderStories();
+    renderFeed();
+    renderExplore();
+    startTimer();
+  }
+
+  function init() {
+    // ── Auth screen events ─────────────────────────────────────────
+    document.getElementById("auth-btn").addEventListener("click", handleAuth);
+    document.getElementById("auth-toggle-btn").addEventListener("click", () => {
+      isSignupMode = !isSignupMode;
+      document.getElementById("auth-btn").textContent = isSignupMode ? "Create Pack 🐾" : "Join the Pack 🐾";
+      document.getElementById("auth-toggle-btn").textContent = isSignupMode
+        ? "Already have a dog? Log in"
+        : "New pup? Sign up here";
+    });
+    // Allow pressing Enter in the handle field to submit
+    document.getElementById("auth-handle").addEventListener("keydown", e => {
+      if (e.key === "Enter") handleAuth();
+    });
+
+    // ── Camera / upload ────────────────────────────────────────────
+    const fileInput = document.getElementById("file-input");
+    document.getElementById("camera-btn").addEventListener("click",   () => fileInput.click());
+    document.getElementById("add-story-btn").addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", handleFileSelected);
+
+    // ── Bottom nav ─────────────────────────────────────────────────
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+    });
+
+    // ── Story viewer close ─────────────────────────────────────────
+    document.getElementById("story-close").addEventListener("click", e => {
+      e.stopPropagation();
+      closeStoryViewer();
+    });
+
+    // ── Profile logout ─────────────────────────────────────────────
+    document.getElementById("logout-btn").addEventListener("click", handleLogout);
+
+    // ── Try to restore session ─────────────────────────────────────
+    loadUser();
+    if (currentUser) {
+      bootApp();
+    }
+  }
+
+  // Kick everything off once the DOM is ready
+  document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
 </html>
