@@ -452,7 +452,7 @@
       /* ── CONFIG ─────────────────────────────────────────────── */
       const API_BASE      = 'https://petsocial-api.chanduchandu1177.workers.dev';
       const ENDPOINTS     = { login: `${API_BASE}/login`, signup: `${API_BASE}/signup` };
-      const REDIRECT_HOME = '/index.html';
+      const REDIRECT_HOME = '/';
       const TOKEN_KEY     = 'dogsocial_token';
       const USER_KEY      = 'dogsocial_user';
 
@@ -677,50 +677,39 @@
       /* ── SIGNUP SUBMIT ──────────────────────────────────────── */
       /* Worker: POST /signup → { token, user } (auto-verified)   */
       /* Token returned immediately — redirect straight to feed.  */
-      document.getElementById('signup-form')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        clearApiError('signup');
+     // SIGNUP (Auto verified)
+if (url.pathname === "/signup" && request.method === "POST") {
+  const { username, email, password } = await request.json();
 
-        const username = signupUsernameInput.value.trim();
-        const email    = signupEmailInput.value.trim();
-        const password = signupPwInput.value;
-        let valid = true;
+  if (!username || !email || !password) {
+    return json({ error: "All fields required" }, 400);
+  }
 
-        if (!username || !isValidUsername(username)) {
-          markInvalid(signupUsernameInput, 'signup-username-error',
-            username.length < 3 ? 'Username must be at least 3 characters.' : 'Invalid username format.');
-          valid = false;
-        }
-        if (!email || !isValidEmail(email)) {
-          markInvalid(signupEmailInput, 'signup-email-error', 'Enter a valid email address.');
-          valid = false;
-        }
-        if (!password || !isValidPassword(password)) {
-          markInvalid(signupPwInput, 'signup-password-error', 'Password must be at least 8 characters.');
-          valid = false;
-        }
-        if (!valid) return;
+  const password_hash = await hashPassword(password);
 
-        setLoading('signup-form', true);
-        try {
-          const data  = await apiFetch(ENDPOINTS.signup, { username, email, password });
-          const token = data.token ?? data.jwt ?? data.access_token;
-          if (!token) throw new Error('No token received from server.');
+  try {
+    await env.DB.prepare(`
+      INSERT INTO users (id, username, email, password_hash, is_verified)
+      VALUES (?, ?, ?, ?, 1)
+    `)
+    .bind(
+      crypto.randomUUID(),
+      username,
+      email,
+      password_hash
+    )
+    .run();
+  } catch (e) {
+    return json({ error: "User already exists" }, 400);
+  }
 
-          tokenStore.save(token, data.user ?? { username, email });
-          showToast('Welcome to DogSocial! 🐶', 'success');
-          setTimeout(() => window.location.replace(REDIRECT_HOME), 700);
-        } catch (err) {
-          const raw = err.message ?? '';
-          showApiError('signup', err.name === 'AbortError'
-            ? 'Request timed out. Check your connection.'
-            : raw.toLowerCase().includes('exists')
-              ? 'An account with that username or email already exists.'
-              : raw || 'Could not create account. Please try again.');
-        } finally {
-          setLoading('signup-form', false);
-        }
-      });
+  const token = generateToken();
+
+  return json({
+    token,
+    user: { username, email }
+  });
+}
 
       /* ── TAB SWITCHING ──────────────────────────────────────── */
       const switchTo = (tab) => {
