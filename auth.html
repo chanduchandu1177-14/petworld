@@ -3,7 +3,7 @@
 <head>
   <!-- ============================================================
        DogSocial — Authentication Page (Login / Signup)
-       Auto-verify on signup — no email verification step
+       Email verification flow — user must verify before login
        Cloudflare Pages ready
        ============================================================ -->
   <meta charset="UTF-8" />
@@ -446,11 +446,7 @@
     (() => {
       'use strict';
 
-      /* ── FIX 5: HTTPS ENFORCEMENT ───────────────────────────
-         Cloudflare Pages enforces HTTPS, but this JS guard ensures
-         any accidental http:// link gets immediately upgraded.
-         Skips localhost/127.0.0.1 so local dev still works.
-         ───────────────────────────────────────────────────── */
+      /* ── HTTPS ENFORCEMENT ─────────────────────────────────── */
       if (location.protocol === 'http:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
         location.replace('https:' + location.href.slice(5));
       }
@@ -464,8 +460,6 @@
 
       /* ── TOKEN STORE ────────────────────────────────────────── */
       const tokenStore = {
-        // FIX 1: sessionStorage clears on tab/browser close, reducing XSS exposure.
-        // TODO production: migrate to httpOnly cookies set by the Worker (JS-unreadable).
         save(token, user) {
           try {
             sessionStorage.setItem(TOKEN_KEY, token);
@@ -483,15 +477,10 @@
         logout()    { tokenStore.clear(); window.location.replace('/auth.html'); },
         getToken:   tokenStore.get,
         getUser:    tokenStore.getUser,
-        // FIX 2: Always spread authHeader() into protected fetches:
-        //   headers: { 'Content-Type': 'application/json', ...Auth.authHeader() }
         authHeader: () => {
           const t = tokenStore.get();
           return t ? { Authorization: `Bearer ${t}` } : {};
         },
-        // Auth.apiFetch — convenience wrapper with auth header + strict JSON + timeout.
-        // Use this on ALL protected API calls in index.html and create-post.html:
-        //   const data = await Auth.apiFetch(url, { method: 'POST', body: JSON.stringify({...}) });
         apiFetch: async (url, opts = {}) => {
           const ctrl = new AbortController();
           const tid  = setTimeout(() => ctrl.abort(), 12000);
@@ -511,7 +500,7 @@
       };
 
       /* Already logged in → skip auth page */
-      sessionStorage
+      if (tokenStore.exists()) { window.location.replace(REDIRECT_HOME); }
 
       /* ── VALIDATION ─────────────────────────────────────────── */
       const isValidEmail    = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
@@ -576,7 +565,7 @@
         btn.setAttribute('aria-busy', String(on));
       };
 
-      /* ── API FETCH ──────────────────────────────────────────── */
+      /* ── API FETCH (for signup/login) ───────────────────────── */
       const apiFetch = async (url, body) => {
         const ctrl    = new AbortController();
         const timeout = setTimeout(() => ctrl.abort(), 12000);
@@ -587,7 +576,6 @@
             body: JSON.stringify(body),
             signal: ctrl.signal,
           });
-          // FIX 4: strict JSON — non-JSON response surfaces a real error
           let data;
           try { data = await res.json(); }
           catch { throw new Error(`Server returned non-JSON (HTTP ${res.status}). Check your Worker.`); }
@@ -672,7 +660,6 @@
       signupPwInput?.addEventListener('focus', () => clearMark(signupPwInput, 'signup-password-error'));
 
       /* ── LOGIN SUBMIT ───────────────────────────────────────── */
-      /* Worker: POST /login → { token, user } | { error }        */
       document.getElementById('login-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         clearApiError('login');
@@ -709,9 +696,7 @@
         }
       });
 
-      /* ── SIGNUP SUBMIT ──────────────────────────────────────── */
-      /* Worker: POST /signup → { token, user } (auto-verified)   */
-      /* Token returned immediately — redirect straight to feed.  */
+      /* ── SIGNUP SUBMIT (UPDATED FOR EMAIL VERIFICATION) ─────── */
       document.getElementById('signup-form')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         clearApiError('signup');
@@ -738,7 +723,16 @@
 
         setLoading('signup-form', true);
         try {
-          const data  = await apiFetch(ENDPOINTS.signup, { username, email, password });
+          const data = await apiFetch(ENDPOINTS.signup, { username, email, password });
+
+          // ✅ If the backend returns a message (verification sent), handle it
+          if (data.message) {
+            showToast('Verification email sent! 📧 Check your inbox.', 'success');
+            switchTo('login'); // switch to login tab
+            return;
+          }
+
+          // Fallback for old behaviour (just in case) – but we now expect a message
           const token = data.token ?? data.jwt ?? data.access_token;
           if (!token) throw new Error('No token received from server.');
 
