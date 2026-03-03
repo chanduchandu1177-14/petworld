@@ -1,751 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- ============================================================
-       DogSocial — Authentication Page (Login / Signup)
-       Auto-verify on signup — no email verification step
-       Cloudflare Pages ready
-       ============================================================ -->
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Sign in or create your DogSocial account to share your dog's best moments." />
-  <meta name="robots" content="noindex, nofollow" />
-  <meta name="theme-color" content="#ff6b35" />
-  <title>DogSocial 🐶 — Sign In</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐶</text></svg>" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DogSocial — Login / Signup</title>
 
-  <style>
-    /* ============================================================
-       DESIGN TOKENS
-       ============================================================ */
-    :root {
-      --clr-bg:           #fdf6f0;
-      --clr-surface:      #ffffff;
-      --clr-border:       #f0e4d8;
-      --clr-border-focus: #ff6b35;
-      --clr-text:         #1a1008;
-      --clr-text-muted:   #8a7060;
-      --clr-accent:       #ff6b35;
-      --clr-accent-dark:  #c94d1a;
-      --clr-accent-light: rgba(255,107,53,0.10);
-      --clr-success:      #2e7d32;
-      --clr-error:        #c62828;
-      --clr-error-bg:     #fff5f5;
-      --clr-error-border: #ffcdd2;
-      --clr-shadow:       rgba(80,40,10,0.10);
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #fdf6f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
 
-      --font-display: 'Fraunces', Georgia, serif;
-      --font-body:    'DM Sans', system-ui, sans-serif;
+.card {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  width: 320px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
 
-      --radius-card:  24px;
-      --radius-input: 14px;
-      --radius-btn:   50px;
-      --transition:   0.2s ease;
-    }
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
 
-    /* ============================================================
-       RESET & BASE
-       ============================================================ */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { -webkit-text-size-adjust: 100%; }
-    body {
-      font-family: var(--font-body);
-      background-color: var(--clr-bg);
-      color: var(--clr-text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 16px;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
-      position: relative;
-      overflow: hidden;
-    }
-    body::before, body::after {
-      content: ''; position: fixed; border-radius: 50%; pointer-events: none; z-index: 0;
-    }
-    body::before {
-      width: 480px; height: 480px;
-      background: radial-gradient(circle, rgba(255,179,71,0.18) 0%, transparent 70%);
-      top: -120px; right: -120px;
-    }
-    body::after {
-      width: 400px; height: 400px;
-      background: radial-gradient(circle, rgba(255,107,53,0.12) 0%, transparent 70%);
-      bottom: -100px; left: -100px;
-    }
-    img { display: block; max-width: 100%; }
-    button { cursor: pointer; border: none; background: none; font-family: inherit; }
-    input  { font-family: inherit; }
-    a { color: var(--clr-accent); text-decoration: none; font-weight: 500; }
-    a:hover { text-decoration: underline; }
-    .visually-hidden {
-      position: absolute; width: 1px; height: 1px;
-      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
-    }
+input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+}
 
-    /* ============================================================
-       WRAPPER & BRANDING
-       ============================================================ */
-    .auth-wrapper { position: relative; z-index: 1; width: 100%; max-width: 440px; }
+button {
+  width: 100%;
+  padding: 10px;
+  background: #ff6b35;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
 
-    .brand { text-align: center; margin-bottom: 28px; animation: fadeDown 0.5s ease both; }
-    .brand-logo { font-size: 3rem; line-height: 1; margin-bottom: 6px; display: block; }
-    .brand-name {
-      font-family: var(--font-display); font-weight: 900; font-size: 2rem;
-      color: var(--clr-accent); letter-spacing: -0.02em;
-    }
-    .brand-tagline { font-size: 0.9rem; color: var(--clr-text-muted); margin-top: 4px; }
+button:hover {
+  background: #e55a2b;
+}
 
-    @keyframes fadeDown { from { opacity:0; transform:translateY(-14px); } to { opacity:1; transform:translateY(0); } }
-    @keyframes fadeUp   { from { opacity:0; transform:translateY(14px);  } to { opacity:1; transform:translateY(0); } }
-    @keyframes panelIn  { from { opacity:0; transform:translateY(6px);   } to { opacity:1; transform:translateY(0); } }
+.switch {
+  text-align: center;
+  margin-top: 15px;
+  cursor: pointer;
+  color: #ff6b35;
+}
 
-    /* ============================================================
-       AUTH CARD
-       ============================================================ */
-    .auth-card {
-      background: var(--clr-surface);
-      border-radius: var(--radius-card);
-      border: 1.5px solid var(--clr-border);
-      box-shadow: 0 4px 32px var(--clr-shadow), 0 1px 4px var(--clr-shadow);
-      overflow: hidden;
-      animation: fadeUp 0.45s ease both 0.1s;
-    }
-
-    /* ============================================================
-       TAB BAR
-       ============================================================ */
-    .tab-bar {
-      display: grid; grid-template-columns: 1fr 1fr;
-      border-bottom: 1.5px solid var(--clr-border);
-    }
-    .tab-btn {
-      padding: 16px 12px; font-size: 0.95rem; font-weight: 600;
-      color: var(--clr-text-muted); background: var(--clr-surface);
-      border-bottom: 3px solid transparent;
-      transition: color var(--transition), border-color var(--transition), background var(--transition);
-      letter-spacing: 0.01em;
-    }
-    .tab-btn:hover { color: var(--clr-text); background: rgba(255,107,53,0.04); }
-    .tab-btn[aria-selected="true"] {
-      color: var(--clr-accent); border-bottom-color: var(--clr-accent);
-      background: rgba(255,107,53,0.04);
-    }
-
-    /* ============================================================
-       FORM PANELS
-       ============================================================ */
-    .form-panels { position: relative; }
-    .form-panel {
-      padding: 28px 28px 24px; display: none; flex-direction: column;
-      gap: 18px; animation: panelIn 0.3s ease both;
-    }
-    .form-panel.active { display: flex; }
-
-    .panel-title {
-      font-family: var(--font-display); font-weight: 700; font-size: 1.35rem;
-      color: var(--clr-text); letter-spacing: -0.01em;
-    }
-    .panel-sub { font-size: 0.88rem; color: var(--clr-text-muted); margin-top: 4px; }
-
-    /* ============================================================
-       FORM FIELDS
-       ============================================================ */
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field-label {
-      font-size: 0.85rem; font-weight: 600; color: var(--clr-text);
-      display: flex; align-items: center; gap: 6px;
-    }
-    .required-dot {
-      width: 5px; height: 5px; border-radius: 50%;
-      background: var(--clr-accent); display: inline-block; flex-shrink: 0;
-    }
-    .input-wrap { position: relative; display: flex; align-items: center; }
-    .input-icon { position: absolute; left: 14px; font-size: 1rem; pointer-events: none; z-index: 1; }
-    .field-input {
-      width: 100%; padding: 12px 14px 12px 40px;
-      border: 1.5px solid var(--clr-border); border-radius: var(--radius-input);
-      font-size: 0.95rem; color: var(--clr-text); background: #fdf6f0; outline: none;
-      transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
-      -webkit-appearance: none;
-    }
-    .field-input::placeholder { color: #c0ad9e; }
-    .field-input:focus {
-      border-color: var(--clr-border-focus); background: var(--clr-surface);
-      box-shadow: 0 0 0 4px rgba(255,107,53,0.10);
-    }
-    .field-input.invalid {
-      border-color: var(--clr-error); background: var(--clr-error-bg);
-      box-shadow: 0 0 0 4px rgba(198,40,40,0.08);
-    }
-    .field-input.valid { border-color: var(--clr-success); }
-
-    .show-password-btn {
-      position: absolute; right: 12px; font-size: 1rem; color: var(--clr-text-muted);
-      padding: 4px; border-radius: 6px;
-      transition: color var(--transition), background var(--transition);
-      line-height: 1; user-select: none;
-    }
-    .show-password-btn:hover { color: var(--clr-text); background: var(--clr-border); }
-
-    /* Password strength */
-    .strength-wrap { display: none; flex-direction: column; gap: 4px; margin-top: 2px; }
-    .strength-wrap.visible { display: flex; }
-    .strength-track { height: 4px; background: var(--clr-border); border-radius: 4px; overflow: hidden; }
-    .strength-fill { height: 100%; border-radius: 4px; width: 0%; transition: width 0.3s ease, background 0.3s ease; }
-    .strength-label { font-size: 0.75rem; font-weight: 500; color: var(--clr-text-muted); }
-
-    .field-error {
-      font-size: 0.8rem; color: var(--clr-error); font-weight: 500;
-      min-height: 16px; display: flex; align-items: center; gap: 4px;
-    }
-    .field-error:empty { display: none; }
-
-    /* ============================================================
-       API ERROR BANNER
-       ============================================================ */
-    .api-error {
-      display: none;
-      background: var(--clr-error-bg); border: 1.5px solid var(--clr-error-border);
-      border-radius: 12px; padding: 12px 14px; font-size: 0.88rem;
-      color: var(--clr-error); font-weight: 500; gap: 8px; align-items: flex-start;
-      animation: panelIn 0.25s ease both;
-    }
-    .api-error.visible { display: flex; }
-    .api-error-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
-
-    /* ============================================================
-       SUBMIT BUTTON
-       ============================================================ */
-    .submit-btn {
-      width: 100%; padding: 14px; background: var(--clr-accent); color: #fff;
-      font-size: 1rem; font-weight: 700; border-radius: var(--radius-btn);
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-      transition: background var(--transition), transform var(--transition), box-shadow var(--transition);
-      box-shadow: 0 4px 14px rgba(255,107,53,0.30); letter-spacing: 0.01em; margin-top: 4px;
-    }
-    .submit-btn:hover:not(:disabled) {
-      background: var(--clr-accent-dark); transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(255,107,53,0.38);
-    }
-    .submit-btn:active:not(:disabled) { transform: scale(0.98); }
-    .submit-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
-
-    .btn-spinner {
-      width: 18px; height: 18px;
-      border: 2.5px solid rgba(255,255,255,0.4); border-top-color: #fff;
-      border-radius: 50%; animation: spin 0.7s linear infinite;
-      display: none; flex-shrink: 0;
-    }
-    .btn-spinner.visible { display: block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ============================================================
-       SWITCH LINK
-       ============================================================ */
-    .switch-link {
-      text-align: center; font-size: 0.88rem; color: var(--clr-text-muted);
-      padding: 0 28px 24px;
-    }
-    .switch-link button {
-      color: var(--clr-accent); font-weight: 600; font-size: 0.88rem;
-      font-family: inherit; padding: 0; transition: color var(--transition);
-    }
-    .switch-link button:hover { color: var(--clr-accent-dark); text-decoration: underline; }
-
-    /* ============================================================
-       FOOTER & TOAST
-       ============================================================ */
-    .auth-footer {
-      text-align: center; margin-top: 20px; font-size: 0.78rem;
-      color: var(--clr-text-muted); animation: fadeUp 0.5s ease both 0.25s;
-    }
-    .auth-footer a { font-size: 0.78rem; }
-
-    #toast-container {
-      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
-      z-index: 999; display: flex; flex-direction: column; gap: 10px;
-      align-items: center; pointer-events: none;
-    }
-    .toast {
-      background: var(--clr-text); color: #fff; font-size: 0.88rem; font-weight: 500;
-      padding: 10px 18px; border-radius: var(--radius-btn);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
-      animation: toastIn 0.3s ease, toastOut 0.3s ease 2.5s both; white-space: nowrap;
-    }
-    .toast.success { background: var(--clr-success); }
-    .toast.error   { background: var(--clr-error); }
-    @keyframes toastIn  { from { opacity:0; transform:translateY(12px) scale(0.94); } to { opacity:1; transform:translateY(0) scale(1); } }
-    @keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(8px); } }
-
-    @media (max-width: 480px) {
-      .form-panel { padding: 22px 20px 18px; }
-      .switch-link { padding: 0 20px 20px; }
-      .brand-name  { font-size: 1.7rem; }
-    }
-  </style>
+.error {
+  color: red;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+</style>
 </head>
 
 <body>
-  <div class="auth-wrapper">
 
-    <!-- Branding -->
-    <div class="brand">
-      <span class="brand-logo" role="img" aria-label="Dog emoji">🐶</span>
-      <div class="brand-name">DogSocial</div>
-      <p class="brand-tagline">Share every woof with the world 🐾</p>
-    </div>
+<div class="card">
+  <h2 id="form-title">Login</h2>
 
-    <!-- Auth Card -->
-    <div class="auth-card" role="main">
+  <div class="error" id="error-msg"></div>
 
-      <!-- Tabs -->
-      <div class="tab-bar" role="tablist" aria-label="Authentication mode">
-        <button class="tab-btn" id="tab-login"  role="tab" aria-selected="true"  aria-controls="panel-login"  data-tab="login" >Sign In</button>
-        <button class="tab-btn" id="tab-signup" role="tab" aria-selected="false" aria-controls="panel-signup" data-tab="signup">Create Account</button>
-      </div>
+  <input type="text" id="username" placeholder="Username (Signup only)" style="display:none" />
+  <input type="email" id="email" placeholder="Email" />
+  <input type="password" id="password" placeholder="Password" />
 
-      <div class="form-panels">
+  <button id="submit-btn">Login</button>
 
-        <!-- ── LOGIN ──────────────────────────────────────────── -->
-        <section class="form-panel active" id="panel-login" role="tabpanel" aria-labelledby="tab-login">
-          <div>
-            <h1 class="panel-title">Welcome back 👋</h1>
-            <p class="panel-sub">Sign in to see your pack's latest posts.</p>
-          </div>
-
-          <div class="api-error" id="login-api-error" role="alert" aria-live="assertive">
-            <span class="api-error-icon" aria-hidden="true">⚠️</span>
-            <span id="login-api-error-msg"></span>
-          </div>
-
-          <form id="login-form" novalidate autocomplete="on">
-            <!-- Email -->
-            <div class="field">
-              <label class="field-label" for="login-email">
-                Email <span class="required-dot" aria-hidden="true"></span>
-              </label>
-              <div class="input-wrap">
-                <span class="input-icon" aria-hidden="true">✉️</span>
-                <input class="field-input" type="email" id="login-email" name="email"
-                  placeholder="you@example.com" autocomplete="email" inputmode="email"
-                  maxlength="254" required aria-describedby="login-email-error" aria-required="true" />
-              </div>
-              <span class="field-error" id="login-email-error" role="alert" aria-live="polite"></span>
-            </div>
-
-            <!-- Password -->
-            <div class="field" style="margin-top:4px">
-              <label class="field-label" for="login-password">
-                Password <span class="required-dot" aria-hidden="true"></span>
-              </label>
-              <div class="input-wrap">
-                <span class="input-icon" aria-hidden="true">🔒</span>
-                <input class="field-input" type="password" id="login-password" name="password"
-                  placeholder="Your password" autocomplete="current-password"
-                  maxlength="128" required aria-describedby="login-password-error" aria-required="true" />
-                <button type="button" class="show-password-btn" aria-label="Show password" data-target="login-password">👁</button>
-              </div>
-              <span class="field-error" id="login-password-error" role="alert" aria-live="polite"></span>
-            </div>
-
-            <button type="submit" class="submit-btn" id="login-submit">
-              <div class="btn-spinner" id="login-spinner" aria-hidden="true"></div>
-              <span id="login-btn-text">Sign In 🐾</span>
-            </button>
-          </form>
-        </section>
-
-        <!-- ── SIGNUP ─────────────────────────────────────────── -->
-        <section class="form-panel" id="panel-signup" role="tabpanel" aria-labelledby="tab-signup" hidden>
-          <div>
-            <h1 class="panel-title">Create your account ✨</h1>
-            <p class="panel-sub">Your dog deserves a fan page. Let's build one.</p>
-          </div>
-
-          <div class="api-error" id="signup-api-error" role="alert" aria-live="assertive">
-            <span class="api-error-icon" aria-hidden="true">⚠️</span>
-            <span id="signup-api-error-msg"></span>
-          </div>
-
-          <form id="signup-form" novalidate autocomplete="on">
-            <!-- Username -->
-            <div class="field">
-              <label class="field-label" for="signup-username">
-                Username <span class="required-dot" aria-hidden="true"></span>
-              </label>
-              <div class="input-wrap">
-                <span class="input-icon" aria-hidden="true">🐶</span>
-                <input class="field-input" type="text" id="signup-username" name="username"
-                  placeholder="e.g. rocky_the_lab" autocomplete="username"
-                  maxlength="30" required aria-describedby="signup-username-error" aria-required="true" />
-              </div>
-              <span class="field-error" id="signup-username-error" role="alert" aria-live="polite"></span>
-            </div>
-
-            <!-- Email -->
-            <div class="field">
-              <label class="field-label" for="signup-email">
-                Email <span class="required-dot" aria-hidden="true"></span>
-              </label>
-              <div class="input-wrap">
-                <span class="input-icon" aria-hidden="true">✉️</span>
-                <input class="field-input" type="email" id="signup-email" name="email"
-                  placeholder="you@example.com" autocomplete="email" inputmode="email"
-                  maxlength="254" required aria-describedby="signup-email-error" aria-required="true" />
-              </div>
-              <span class="field-error" id="signup-email-error" role="alert" aria-live="polite"></span>
-            </div>
-
-            <!-- Password -->
-            <div class="field">
-              <label class="field-label" for="signup-password">
-                Password <span class="required-dot" aria-hidden="true"></span>
-              </label>
-              <div class="input-wrap">
-                <span class="input-icon" aria-hidden="true">🔒</span>
-                <input class="field-input" type="password" id="signup-password" name="password"
-                  placeholder="Min. 8 characters" autocomplete="new-password"
-                  maxlength="128" required aria-describedby="signup-password-error" aria-required="true" />
-                <button type="button" class="show-password-btn" aria-label="Show password" data-target="signup-password">👁</button>
-              </div>
-              <div class="strength-wrap" id="strength-wrap" aria-hidden="true">
-                <div class="strength-track"><div class="strength-fill" id="strength-fill"></div></div>
-                <span class="strength-label" id="strength-label"></span>
-              </div>
-              <span class="field-error" id="signup-password-error" role="alert" aria-live="polite"></span>
-            </div>
-
-            <button type="submit" class="submit-btn" id="signup-submit">
-              <div class="btn-spinner" id="signup-spinner" aria-hidden="true"></div>
-              <span id="signup-btn-text">Create Account 🐶</span>
-            </button>
-          </form>
-        </section>
-
-      </div><!-- /form-panels -->
-
-      <p class="switch-link" id="switch-text">
-        Don't have an account?
-        <button id="switch-btn" data-target="signup">Sign up</button>
-      </p>
-
-    </div><!-- /auth-card -->
-
-    <footer class="auth-footer">
-      <p>By continuing, you agree to our <a href="/terms">Terms</a> &amp; <a href="/privacy">Privacy Policy</a>.</p>
-    </footer>
-
+  <div class="switch" id="switch-btn">
+    Don't have an account? Signup
   </div>
+</div>
 
-  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+<script>
+const API_BASE = "https://petsocial-api.chanduchandu1177.workers.dev";
+const TOKEN_KEY = "dogsocial_token";
+const USER_KEY  = "dogsocial_user";
 
-  <script>
-    (() => {
-      'use strict';
+let isLogin = true;
 
-      /* ── CONFIG ─────────────────────────────────────────────── */
-      const API_BASE      = 'https://petsocial-api.chanduchandu1177.workers.dev';
-      const ENDPOINTS     = { login: `${API_BASE}/login`, signup: `${API_BASE}/signup` };
-      const REDIRECT_HOME = '/';
-      const TOKEN_KEY     = 'dogsocial_token';
-      const USER_KEY      = 'dogsocial_user';
+const title = document.getElementById("form-title");
+const usernameInput = document.getElementById("username");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const submitBtn = document.getElementById("submit-btn");
+const switchBtn = document.getElementById("switch-btn");
+const errorMsg = document.getElementById("error-msg");
 
-      /* ── TOKEN STORE ────────────────────────────────────────── */
-      const tokenStore = {
-        save(token, user) {
-          try {
-            localStorage.setItem(TOKEN_KEY, token);
-            if (user) localStorage.setItem(USER_KEY, JSON.stringify(user));
-          } catch (e) { console.warn('Storage unavailable:', e.message); }
-        },
-        get()     { try { return localStorage.getItem(TOKEN_KEY); }               catch { return null; } },
-        getUser() { try { const r = localStorage.getItem(USER_KEY); return r ? JSON.parse(r) : null; } catch { return null; } },
-        clear()   { try { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); } catch {} },
-        exists()  { return Boolean(tokenStore.get()); },
-      };
-
-      /* Expose globally so other pages can call Auth.logout() */
-      window.Auth = {
-        logout()    { tokenStore.clear(); window.location.replace('/auth.html'); },
-        getToken:   tokenStore.get,
-        getUser:    tokenStore.getUser,
-        authHeader: () => ({ Authorization: `Bearer ${tokenStore.get()}` }),
-      };
-
-      /* Already logged in → skip auth page */
-      if (tokenStore.exists()) { window.location.replace(REDIRECT_HOME); }
-
-      /* ── VALIDATION ─────────────────────────────────────────── */
-      const isValidEmail    = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
-      const isValidUsername = (v) => /^[a-zA-Z0-9_-]{3,30}$/.test(v.trim());
-      const isValidPassword = (v) => v.length >= 8;
-
-      const passwordStrength = (pw) => {
-        let s = 0;
-        if (pw.length >= 8)  s++;
-        if (pw.length >= 12) s++;
-        if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) s++;
-        if (/\d/.test(pw))   s++;
-        if (/[^a-zA-Z0-9]/.test(pw)) s++;
-        return Math.min(s, 4);
-      };
-      const STRENGTH_LABELS = ['Too weak', 'Weak', 'Fair', 'Good', 'Strong 💪'];
-      const STRENGTH_COLORS = ['#c62828', '#e65100', '#f9a825', '#2e7d32', '#1b5e20'];
-
-      /* ── DOM HELPERS ────────────────────────────────────────── */
-      const markInvalid = (input, errId, msg) => {
-        input.classList.add('invalid'); input.classList.remove('valid');
-        input.setAttribute('aria-invalid', 'true');
-        const el = document.getElementById(errId);
-        if (el) el.textContent = '⚠ ' + msg;
-      };
-      const markValid = (input, errId) => {
-        input.classList.remove('invalid'); input.classList.add('valid');
-        input.setAttribute('aria-invalid', 'false');
-        const el = document.getElementById(errId);
-        if (el) el.textContent = '';
-      };
-      const clearMark = (input, errId) => {
-        input.classList.remove('invalid', 'valid'); input.removeAttribute('aria-invalid');
-        const el = document.getElementById(errId); if (el) el.textContent = '';
-      };
-      const showApiError = (prefix, msg) => {
-        document.getElementById(`${prefix}-api-error-msg`).textContent = msg;
-        document.getElementById(`${prefix}-api-error`).classList.add('visible');
-      };
-      const clearApiError = (prefix) =>
-        document.getElementById(`${prefix}-api-error`)?.classList.remove('visible');
-
-      /* ── TOAST ──────────────────────────────────────────────── */
-      const showToast = (message, type = '') => {
-        const c = document.getElementById('toast-container');
-        const t = document.createElement('div');
-        t.className = `toast${type ? ' ' + type : ''}`;
-        t.textContent = message;
-        c.appendChild(t);
-        setTimeout(() => t.remove(), 3100);
-      };
-
-      /* ── LOADING STATE ──────────────────────────────────────── */
-      const setLoading = (formId, on) => {
-        const isLogin = formId === 'login-form';
-        const spinner = document.getElementById(isLogin ? 'login-spinner'  : 'signup-spinner');
-        const text    = document.getElementById(isLogin ? 'login-btn-text' : 'signup-btn-text');
-        const btn     = document.getElementById(isLogin ? 'login-submit'   : 'signup-submit');
-        spinner.classList.toggle('visible', on);
-        text.style.opacity = on ? '0' : '1';
-        btn.disabled = on;
-        btn.setAttribute('aria-busy', String(on));
-      };
-
-      /* ── API FETCH ──────────────────────────────────────────── */
-      const apiFetch = async (url, body) => {
-        const ctrl    = new AbortController();
-        const timeout = setTimeout(() => ctrl.abort(), 12000);
-        try {
-          const res  = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-            signal: ctrl.signal,
-          });
-          const data = await res.json().catch(() => ({}));
-          if (!res.ok) throw new Error(data.message ?? data.error ?? `Error ${res.status}`);
-          return data;
-        } finally {
-          clearTimeout(timeout);
-        }
-      };
-
-      /* ── PASSWORD VISIBILITY TOGGLE ─────────────────────────── */
-      document.querySelectorAll('.show-password-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const input = document.getElementById(btn.dataset.target);
-          if (!input) return;
-          const hide = input.type === 'password';
-          input.type = hide ? 'text' : 'password';
-          btn.textContent = hide ? '🙈' : '👁';
-          btn.setAttribute('aria-label', hide ? 'Hide password' : 'Show password');
-        });
-      });
-
-      /* ── PASSWORD STRENGTH ──────────────────────────────────── */
-      const signupPwInput  = document.getElementById('signup-password');
-      const strengthWrapEl = document.getElementById('strength-wrap');
-      const strengthFillEl = document.getElementById('strength-fill');
-      const strengthLblEl  = document.getElementById('strength-label');
-
-      signupPwInput?.addEventListener('input', () => {
-        const pw = signupPwInput.value;
-        if (!pw) { strengthWrapEl.classList.remove('visible'); return; }
-        strengthWrapEl.classList.add('visible');
-        const score = passwordStrength(pw);
-        strengthFillEl.style.width      = `${(score / 4) * 100}%`;
-        strengthFillEl.style.background = STRENGTH_COLORS[score];
-        strengthLblEl.textContent       = STRENGTH_LABELS[score];
-        strengthLblEl.style.color       = STRENGTH_COLORS[score];
-      });
-
-      /* ── REAL-TIME VALIDATION (blur) ────────────────────────── */
-      const loginEmailInput = document.getElementById('login-email');
-      loginEmailInput?.addEventListener('blur', () => {
-        const v = loginEmailInput.value.trim();
-        if (!v)                    markInvalid(loginEmailInput, 'login-email-error', 'Email is required.');
-        else if (!isValidEmail(v)) markInvalid(loginEmailInput, 'login-email-error', 'Enter a valid email address.');
-        else                       markValid(loginEmailInput, 'login-email-error');
-      });
-      loginEmailInput?.addEventListener('focus', () => clearMark(loginEmailInput, 'login-email-error'));
-
-      const loginPwInput = document.getElementById('login-password');
-      loginPwInput?.addEventListener('blur', () => {
-        if (!loginPwInput.value) markInvalid(loginPwInput, 'login-password-error', 'Password is required.');
-        else                     markValid(loginPwInput, 'login-password-error');
-      });
-      loginPwInput?.addEventListener('focus', () => clearMark(loginPwInput, 'login-password-error'));
-
-      const signupUsernameInput = document.getElementById('signup-username');
-      signupUsernameInput?.addEventListener('blur', () => {
-        const v = signupUsernameInput.value.trim();
-        if (!v)                       markInvalid(signupUsernameInput, 'signup-username-error', 'Username is required.');
-        else if (v.length < 3)        markInvalid(signupUsernameInput, 'signup-username-error', 'At least 3 characters required.');
-        else if (!isValidUsername(v)) markInvalid(signupUsernameInput, 'signup-username-error', 'Only letters, numbers, _ and - allowed.');
-        else                          markValid(signupUsernameInput, 'signup-username-error');
-      });
-      signupUsernameInput?.addEventListener('focus', () => clearMark(signupUsernameInput, 'signup-username-error'));
-
-      const signupEmailInput = document.getElementById('signup-email');
-      signupEmailInput?.addEventListener('blur', () => {
-        const v = signupEmailInput.value.trim();
-        if (!v)                    markInvalid(signupEmailInput, 'signup-email-error', 'Email is required.');
-        else if (!isValidEmail(v)) markInvalid(signupEmailInput, 'signup-email-error', 'Enter a valid email address.');
-        else                       markValid(signupEmailInput, 'signup-email-error');
-      });
-      signupEmailInput?.addEventListener('focus', () => clearMark(signupEmailInput, 'signup-email-error'));
-
-      signupPwInput?.addEventListener('blur', () => {
-        const v = signupPwInput.value;
-        if (!v)                       markInvalid(signupPwInput, 'signup-password-error', 'Password is required.');
-        else if (!isValidPassword(v)) markInvalid(signupPwInput, 'signup-password-error', 'Password must be at least 8 characters.');
-        else                          markValid(signupPwInput, 'signup-password-error');
-      });
-      signupPwInput?.addEventListener('focus', () => clearMark(signupPwInput, 'signup-password-error'));
-
-      /* ── LOGIN SUBMIT ───────────────────────────────────────── */
-      /* Worker: POST /login → { token, user } | { error }        */
-      document.getElementById('login-form')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        clearApiError('login');
-
-        const email    = loginEmailInput.value.trim();
-        const password = loginPwInput.value;
-        let valid = true;
-
-        if (!email || !isValidEmail(email)) {
-          markInvalid(loginEmailInput, 'login-email-error', 'Enter a valid email address.');
-          valid = false;
-        }
-        if (!password) {
-          markInvalid(loginPwInput, 'login-password-error', 'Password is required.');
-          valid = false;
-        }
-        if (!valid) return;
-
-        setLoading('login-form', true);
-        try {
-          const data  = await apiFetch(ENDPOINTS.login, { email, password });
-          const token = data.token ?? data.jwt ?? data.access_token;
-          if (!token) throw new Error('No token received from server.');
-
-          tokenStore.save(token, data.user ?? { email });
-          showToast('Welcome back! 🐾', 'success');
-          setTimeout(() => window.location.replace(REDIRECT_HOME), 600);
-        } catch (err) {
-          showApiError('login', err.name === 'AbortError'
-            ? 'Request timed out. Check your connection.'
-            : err.message || 'Invalid credentials.');
-        } finally {
-          setLoading('login-form', false);
-        }
-      });
-
-      /* ── SIGNUP SUBMIT ──────────────────────────────────────── */
-      /* Worker: POST /signup → { token, user } (auto-verified)   */
-      /* Token returned immediately — redirect straight to feed.  */
-     // SIGNUP (Auto verified)
-if (url.pathname === "/signup" && request.method === "POST") {
-  const { username, email, password } = await request.json();
-
-  if (!username || !email || !password) {
-    return json({ error: "All fields required" }, 400);
-  }
-
-  const password_hash = await hashPassword(password);
-
-  try {
-    await env.DB.prepare(`
-      INSERT INTO users (id, username, email, password_hash, is_verified)
-      VALUES (?, ?, ?, ?, 1)
-    `)
-    .bind(
-      crypto.randomUUID(),
-      username,
-      email,
-      password_hash
-    )
-    .run();
-  } catch (e) {
-    return json({ error: "User already exists" }, 400);
-  }
-
-  const token = generateToken();
-
-  return json({
-    token,
-    user: { username, email }
-  });
+/* If already logged in → redirect */
+if (localStorage.getItem(TOKEN_KEY)) {
+  window.location.replace("/");
 }
 
-      /* ── TAB SWITCHING ──────────────────────────────────────── */
-      const switchTo = (tab) => {
-        const isLogin    = tab === 'login';
-        const loginPanel = document.getElementById('panel-login');
-        const sigPanel   = document.getElementById('panel-signup');
-        const switchBtn  = document.getElementById('switch-btn');
-        const switchText = document.getElementById('switch-text');
+/* Switch Login / Signup */
+switchBtn.addEventListener("click", () => {
+  isLogin = !isLogin;
+  errorMsg.textContent = "";
 
-        document.getElementById('tab-login').setAttribute('aria-selected',  String(isLogin));
-        document.getElementById('tab-signup').setAttribute('aria-selected', String(!isLogin));
+  if (isLogin) {
+    title.textContent = "Login";
+    usernameInput.style.display = "none";
+    submitBtn.textContent = "Login";
+    switchBtn.textContent = "Don't have an account? Signup";
+  } else {
+    title.textContent = "Signup";
+    usernameInput.style.display = "block";
+    submitBtn.textContent = "Create Account";
+    switchBtn.textContent = "Already have an account? Login";
+  }
+});
 
-        loginPanel.classList.toggle('active', isLogin);  loginPanel.hidden  = !isLogin;
-        sigPanel.classList.toggle('active', !isLogin);   sigPanel.hidden    =  isLogin;
+/* Submit */
+submitBtn.addEventListener("click", async () => {
+  errorMsg.textContent = "";
 
-        switchText.firstChild.textContent = isLogin ? "Don't have an account? " : 'Already have an account? ';
-        switchBtn.textContent             = isLogin ? 'Sign up' : 'Sign in';
-        switchBtn.dataset.target          = isLogin ? 'signup' : 'login';
+  const email = emailInput.value.trim();
+  const password = passwordInput.value.trim();
+  const username = usernameInput.value.trim();
 
-        clearApiError('login'); clearApiError('signup');
-        const firstInput = (isLogin ? loginPanel : sigPanel).querySelector('input');
-        setTimeout(() => firstInput?.focus(), 50);
-      };
+  if (!email || !password || (!isLogin && !username)) {
+    errorMsg.textContent = "Please fill all fields.";
+    return;
+  }
 
-      document.querySelector('.tab-bar').addEventListener('click', (e) => {
-        const btn = e.target.closest('.tab-btn'); if (btn) switchTo(btn.dataset.tab);
-      });
-      document.querySelector('.tab-bar').addEventListener('keydown', (e) => {
-        if (e.key === 'ArrowRight') switchTo('signup');
-        if (e.key === 'ArrowLeft')  switchTo('login');
-      });
-      document.getElementById('switch-btn')?.addEventListener('click', (e) =>
-        switchTo(e.currentTarget.dataset.target ?? 'signup')
-      );
+  const endpoint = isLogin ? "/login" : "/signup";
 
-    })();
-  </script>
+  try {
+    const res = await fetch(API_BASE + endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(
+        isLogin
+          ? { email, password }
+          : { username, email, password }
+      )
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Something went wrong");
+    }
+
+    /* Save token */
+    localStorage.setItem(TOKEN_KEY, data.token);
+    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+
+    /* Redirect to home */
+    window.location.replace("/");
+
+  } catch (err) {
+    errorMsg.textContent = err.message;
+  }
+});
+</script>
+
 </body>
 </html>
