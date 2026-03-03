@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- ============================================================
+       DogSocial — Create Post Page
+       Cloudflare Pages ready | Canvas compression | R2 upload
+       ============================================================ -->
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Share your dog's best moment with the DogSocial community." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#ff6b35" />
+  <title>DogSocial 🐶 — New Post</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐶</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ============================================================
+       DESIGN TOKENS
+       ============================================================ */
+    :root {
+      --clr-bg:           #fdf6f0;
+      --clr-surface:      #ffffff;
+      --clr-surface-2:    #fef9f5;
+      --clr-border:       #f0e4d8;
+      --clr-border-focus: #ff6b35;
+      --clr-text:         #1a1008;
+      --clr-text-muted:   #8a7060;
+      --clr-accent:       #ff6b35;
+      --clr-accent-dark:  #c94d1a;
+      --clr-accent-light: rgba(255,107,53,0.10);
+      --clr-accent-warm:  #ffb347;
+      --clr-success:      #2e7d32;
+      --clr-success-bg:   #f1f8f1;
+      --clr-error:        #c62828;
+      --clr-error-bg:     #fff5f5;
+      --clr-error-border: #ffcdd2;
+      --clr-shadow:       rgba(80,40,10,0.09);
+      --clr-shadow-md:    rgba(80,40,10,0.15);
+
+      --font-display: 'Fraunces', Georgia, serif;
+      --font-body:    'DM Sans', system-ui, sans-serif;
+
+      --header-h:    60px;
+      --content-max: 600px;
+      --radius-card: 20px;
+      --radius-btn:  50px;
+      --radius-sm:   12px;
+      --transition:  0.2s ease;
+    }
+
+    /* ============================================================
+       RESET & BASE
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--clr-bg);
+      color: var(--clr-text);
+      min-height: 100vh;
+      /* Warm grain */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+    }
+    img, canvas { display: block; max-width: 100%; }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+    textarea, input { font-family: inherit; }
+    a { color: var(--clr-accent); text-decoration: none; }
+    .visually-hidden {
+      position: absolute; width: 1px; height: 1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap;
+    }
+
+    /* ============================================================
+       STICKY HEADER
+       ============================================================ */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: var(--header-h);
+      background: rgba(253,246,240,0.90);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1.5px solid var(--clr-border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+    }
+    .header-inner {
+      width: 100%;
+      max-width: var(--content-max);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .back-btn {
+      display: flex; align-items: center; gap: 7px;
+      font-weight: 600; font-size: 0.9rem;
+      color: var(--clr-text-muted);
+      padding: 8px 12px 8px 8px;
+      border-radius: var(--radius-sm);
+      transition: color var(--transition), background var(--transition);
+    }
+    .back-btn:hover { color: var(--clr-text); background: var(--clr-border); }
+    .back-arrow { font-size: 1.1rem; }
+
+    .header-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--clr-text);
+      letter-spacing: -0.01em;
+      position: absolute;
+      left: 50%; transform: translateX(-50%);
+    }
+
+    /* Header post button (top-right, hidden on mobile if form post btn is visible) */
+    .header-post-btn {
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--clr-accent);
+      padding: 8px 16px;
+      border-radius: var(--radius-btn);
+      border: 2px solid var(--clr-accent);
+      transition: background var(--transition), color var(--transition), transform var(--transition);
+      white-space: nowrap;
+    }
+    .header-post-btn:hover:not(:disabled) {
+      background: var(--clr-accent);
+      color: #fff;
+      transform: translateY(-1px);
+    }
+    .header-post-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    /* ============================================================
+       MAIN CONTENT
+       ============================================================ */
+    .main-content {
+      max-width: var(--content-max);
+      margin: 0 auto;
+      padding: 24px 16px 80px;
+    }
+
+    /* ============================================================
+       UPLOAD ZONE
+       ============================================================ */
+    .upload-zone {
+      background: var(--clr-surface);
+      border: 2px dashed var(--clr-border);
+      border-radius: var(--radius-card);
+      min-height: 280px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 40px 24px;
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+      position: relative;
+      overflow: hidden;
+      animation: fadeUp 0.4s ease both;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--clr-accent);
+      background: var(--clr-accent-light);
+      box-shadow: 0 0 0 5px rgba(255,107,53,0.07);
+    }
+    .upload-zone.drag-over { border-style: solid; }
+    .upload-zone.has-image { padding: 0; min-height: unset; cursor: default; border-style: solid; border-color: var(--clr-border); }
+
+    @keyframes fadeUp   { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Upload placeholder content */
+    .upload-placeholder { display: flex; flex-direction: column; align-items: center; gap: 12px; pointer-events: none; }
+    .upload-icon-wrap {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: rgba(255,107,53,0.10);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem;
+      transition: transform 0.3s ease;
+    }
+    .upload-zone:hover .upload-icon-wrap { transform: scale(1.08) rotate(-4deg); }
+    .upload-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: var(--clr-text);
+      text-align: center;
+    }
+    .upload-sub { font-size: 0.85rem; color: var(--clr-text-muted); text-align: center; line-height: 1.5; }
+    .upload-sub strong { color: var(--clr-accent); }
+    .upload-tags {
+      display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 4px;
+    }
+    .upload-tag {
+      font-size: 0.75rem; font-weight: 600;
+      background: var(--clr-border); color: var(--clr-text-muted);
+      padding: 4px 10px; border-radius: var(--radius-btn);
+    }
+
+    /* Hidden file input */
+    #file-input { display: none; }
+
+    /* ============================================================
+       IMAGE PREVIEW
+       ============================================================ */
+    .preview-wrap { display: none; position: relative; width: 100%; }
+    .preview-wrap.visible { display: block; }
+
+    .preview-img {
+      width: 100%;
+      height: auto;
+      max-height: 520px;
+      object-fit: contain;
+      border-radius: calc(var(--radius-card) - 2px);
+      display: block;
+      background: #1a1008;
+    }
+
+    /* Change / remove overlay buttons */
+    .preview-actions {
+      position: absolute;
+      top: 12px; right: 12px;
+      display: flex; gap: 8px;
+    }
+    .preview-action-btn {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 0.8rem; font-weight: 600;
+      padding: 7px 12px;
+      border-radius: var(--radius-btn);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: transform var(--transition), opacity var(--transition);
+    }
+    .preview-action-btn:hover { transform: scale(1.04); }
+    .btn-change { background: rgba(255,255,255,0.88); color: var(--clr-text); }
+    .btn-remove { background: rgba(198,40,40,0.85); color: #fff; }
+
+    /* Compression badge */
+    .compression-badge {
+      position: absolute;
+      bottom: 12px; left: 12px;
+      display: none;
+      align-items: center; gap: 6px;
+      font-size: 0.75rem; font-weight: 600;
+      background: rgba(26,16,8,0.75);
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: var(--radius-btn);
+      backdrop-filter: blur(8px);
+      animation: fadeDown 0.3s ease both;
+    }
+    .compression-badge.visible { display: flex; }
+
+    /* ============================================================
+       COMPRESSION PROGRESS BAR
+       ============================================================ */
+    .compress-bar-wrap {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      padding: 16px;
+      background: var(--clr-surface);
+      border-radius: var(--radius-card);
+      border: 1.5px solid var(--clr-border);
+      animation: fadeUp 0.25s ease both;
+    }
+    .compress-bar-wrap.visible { display: flex; }
+    .compress-bar-header { display: flex; align-items: center; justify-content: space-between; }
+    .compress-bar-label { font-size: 0.85rem; font-weight: 600; color: var(--clr-text); display: flex; align-items: center; gap: 8px; }
+    .compress-bar-pct { font-size: 0.82rem; font-weight: 700; color: var(--clr-accent); }
+    .compress-track {
+      height: 6px; background: var(--clr-border); border-radius: 6px; overflow: hidden;
+    }
+    .compress-fill {
+      height: 100%; border-radius: 6px; width: 0%;
+      background: linear-gradient(90deg, var(--clr-accent), var(--clr-accent-warm));
+      transition: width 0.25s ease;
+    }
+    .compress-sub { font-size: 0.78rem; color: var(--clr-text-muted); }
+
+    /* Spinning indicator */
+    .spin {
+      width: 14px; height: 14px;
+      border: 2px solid var(--clr-border);
+      border-top-color: var(--clr-accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ============================================================
+       FORM CARD
+       ============================================================ */
+    .form-card {
+      background: var(--clr-surface);
+      border-radius: var(--radius-card);
+      border: 1.5px solid var(--clr-border);
+      box-shadow: 0 2px 16px var(--clr-shadow);
+      overflow: hidden;
+      animation: fadeUp 0.4s ease both 0.1s;
+    }
+
+    .form-section {
+      padding: 20px 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── Caption ── */
+    .caption-field { display: flex; flex-direction: column; gap: 8px; }
+    .caption-label {
+      font-size: 0.85rem; font-weight: 600; color: var(--clr-text);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .caption-meta { margin-left: auto; font-size: 0.78rem; font-weight: 400; color: var(--clr-text-muted); }
+
+    .caption-input {
+      width: 100%;
+      border: 1.5px solid var(--clr-border);
+      border-radius: var(--radius-sm);
+      padding: 13px 14px;
+      font-size: 0.95rem;
+      color: var(--clr-text);
+      background: var(--clr-surface-2);
+      outline: none;
+      resize: vertical;
+      min-height: 100px;
+      max-height: 220px;
+      line-height: 1.55;
+      transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+    }
+    .caption-input::placeholder { color: #c0ad9e; }
+    .caption-input:focus {
+      border-color: var(--clr-border-focus);
+      background: var(--clr-surface);
+      box-shadow: 0 0 0 4px rgba(255,107,53,0.09);
+    }
+    .caption-input.over-limit { border-color: var(--clr-error); box-shadow: 0 0 0 4px rgba(198,40,40,0.08); }
+
+    /* Char counter */
+    .char-counter {
+      display: flex; justify-content: flex-end; align-items: center; gap: 6px;
+      font-size: 0.78rem; font-weight: 500; color: var(--clr-text-muted);
+    }
+    .char-counter .count { font-weight: 700; transition: color var(--transition); }
+    .char-counter.warning .count { color: #e65100; }
+    .char-counter.over    .count { color: var(--clr-error); }
+
+    /* Char arc indicator */
+    .char-arc { width: 20px; height: 20px; flex-shrink: 0; }
+
+    /* ── Tags row (optional) ── */
+    .tags-row {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .tag-chip {
+      font-size: 0.8rem; font-weight: 500;
+      padding: 5px 12px; border-radius: var(--radius-btn);
+      border: 1.5px solid var(--clr-border);
+      color: var(--clr-text-muted);
+      background: var(--clr-surface-2);
+      transition: border-color var(--transition), color var(--transition), background var(--transition);
+    }
+    .tag-chip:hover, .tag-chip.selected {
+      border-color: var(--clr-accent);
+      color: var(--clr-accent);
+      background: var(--clr-accent-light);
+    }
+
+    /* ── Divider ── */
+    .form-divider { height: 1px; background: var(--clr-border); margin: 4px 0; }
+
+    /* ── Upload Progress ── */
+    .upload-progress-wrap {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      padding: 0 20px;
+    }
+    .upload-progress-wrap.visible { display: flex; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 600; color: var(--clr-text); }
+    .progress-track { height: 8px; background: var(--clr-border); border-radius: 8px; overflow: hidden; }
+    .progress-fill {
+      height: 100%; border-radius: 8px; width: 0%;
+      background: linear-gradient(90deg, var(--clr-accent), var(--clr-accent-warm));
+      transition: width 0.3s ease;
+    }
+    .progress-step { font-size: 0.78rem; color: var(--clr-text-muted); display: flex; align-items: center; gap: 6px; }
+
+    /* ── API error ── */
+    .api-error {
+      display: none;
+      margin: 0 20px;
+      background: var(--clr-error-bg);
+      border: 1.5px solid var(--clr-error-border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      color: var(--clr-error);
+      font-weight: 500;
+      gap: 8px; align-items: flex-start;
+      animation: fadeUp 0.25s ease both;
+    }
+    .api-error.visible { display: flex; }
+    .api-error-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Success banner ── */
+    .success-banner {
+      display: none;
+      margin: 0 20px;
+      background: var(--clr-success-bg);
+      border: 1.5px solid #a5d6a7;
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      color: var(--clr-success);
+      font-weight: 600;
+      gap: 8px; align-items: center;
+      animation: fadeUp 0.3s ease both;
+    }
+    .success-banner.visible { display: flex; }
+
+    /* ── Submit button ── */
+    .form-footer { padding: 16px 20px 20px; }
+
+    .submit-btn {
+      width: 100%;
+      padding: 15px;
+      background: var(--clr-accent);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: var(--radius-btn);
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      box-shadow: 0 4px 16px rgba(255,107,53,0.28);
+      transition: background var(--transition), transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+      letter-spacing: 0.01em;
+    }
+    .submit-btn:hover:not(:disabled) {
+      background: var(--clr-accent-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(255,107,53,0.36);
+    }
+    .submit-btn:active:not(:disabled) { transform: scale(0.98); }
+    .submit-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .btn-spinner {
+      width: 20px; height: 20px;
+      border: 2.5px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none; flex-shrink: 0;
+    }
+    .btn-spinner.visible { display: block; }
+
+    /* ============================================================
+       FILE VALIDATION ERROR
+       ============================================================ */
+    .file-error {
+      display: none;
+      background: var(--clr-error-bg);
+      border: 1.5px solid var(--clr-error-border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      color: var(--clr-error);
+      font-weight: 500;
+      gap: 8px; align-items: center;
+      animation: fadeUp 0.25s ease both;
+    }
+    .file-error.visible { display: flex; }
+
+    /* ============================================================
+       TIPS CARD
+       ============================================================ */
+    .tips-card {
+      background: linear-gradient(135deg, rgba(255,179,71,0.12), rgba(255,107,53,0.08));
+      border: 1.5px solid rgba(255,179,71,0.35);
+      border-radius: var(--radius-card);
+      padding: 18px 20px;
+      display: flex; gap: 14px; align-items: flex-start;
+      animation: fadeUp 0.4s ease both 0.2s;
+    }
+    .tips-icon { font-size: 1.5rem; flex-shrink: 0; line-height: 1; }
+    .tips-content {}
+    .tips-title { font-weight: 700; font-size: 0.9rem; color: var(--clr-text); margin-bottom: 6px; }
+    .tips-list { display: flex; flex-direction: column; gap: 4px; }
+    .tips-list li { font-size: 0.82rem; color: var(--clr-text-muted); display: flex; align-items: baseline; gap: 7px; }
+    .tips-list li::before { content: '🐾'; font-size: 0.7rem; flex-shrink: 0; }
+
+    /* ============================================================
+       TOAST
+       ============================================================ */
+    #toast-container {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      z-index: 999; display: flex; flex-direction: column; gap: 10px;
+      align-items: center; pointer-events: none;
+    }
+    .toast {
+      background: var(--clr-text); color: #fff;
+      font-size: 0.88rem; font-weight: 500;
+      padding: 10px 18px; border-radius: var(--radius-btn);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 2.5s both;
+      white-space: nowrap;
+    }
+    .toast.success { background: var(--clr-success); }
+    .toast.error   { background: var(--clr-error); }
+    @keyframes toastIn  { from { opacity:0; transform:translateY(12px) scale(0.94); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes toastOut { from { opacity:1; } to { opacity:0; transform:translateY(8px); } }
+
+    /* ============================================================
+       RESPONSIVE
+       ============================================================ */
+    @media (max-width: 480px) {
+      .main-content { padding: 16px 12px 60px; }
+      .form-section { padding: 16px 16px 0; }
+      .form-footer { padding: 14px 16px 16px; }
+      .tips-card { padding: 14px 16px; }
+      .upload-zone { min-height: 220px; padding: 28px 16px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <a href="/index.html" class="back-btn" aria-label="Go back to home feed">
+        <span class="back-arrow" aria-hidden="true">←</span>
+        <span>Back</span>
+      </a>
+
+      <h1 class="header-title">New Post</h1>
+
+      <button
+        class="header-post-btn"
+        id="header-post-btn"
+        disabled
+        aria-label="Share post"
+        aria-describedby="header-post-status"
+      >Share</button>
+      <span id="header-post-status" class="visually-hidden">Upload an image to share</span>
+    </div>
+  </header>
+
+  <!-- ============================================================
+       MAIN
+       ============================================================ -->
+  <main class="main-content" role="main" id="main">
+
+    <!-- ── Upload Zone ────────────────────────────────────────── -->
+    <div
+      class="upload-zone"
+      id="upload-zone"
+      role="button"
+      tabindex="0"
+      aria-label="Upload a photo of your dog. Click or drag and drop."
+      aria-describedby="upload-sub-text"
+    >
+      <!-- Placeholder (shown when no image) -->
+      <div class="upload-placeholder" id="upload-placeholder">
+        <div class="upload-icon-wrap" aria-hidden="true">📸</div>
+        <p class="upload-title">Drop your dog's best photo</p>
+        <p class="upload-sub" id="upload-sub-text">
+          <strong>Click to browse</strong> or drag &amp; drop<br>
+          JPG, PNG, GIF, WebP — max 5MB
+        </p>
+        <div class="upload-tags" aria-hidden="true">
+          <span class="upload-tag">Auto-compressed</span>
+          <span class="upload-tag">WebP output</span>
+          <span class="upload-tag">≤ 1080px</span>
+        </div>
+      </div>
+
+      <!-- Image preview (hidden until image selected) -->
+      <div class="preview-wrap" id="preview-wrap">
+        <img
+          id="preview-img"
+          class="preview-img"
+          src=""
+          alt="Preview of your selected dog photo"
+        />
+        <div class="preview-actions">
+          <button class="preview-action-btn btn-change" id="change-btn" type="button" aria-label="Choose a different photo">
+            🔄 Change
+          </button>
+          <button class="preview-action-btn btn-remove" id="remove-btn" type="button" aria-label="Remove selected photo">
+            ✕
+          </button>
+        </div>
+        <div class="compression-badge" id="compression-badge" aria-live="polite"></div>
+      </div>
+
+      <!-- Hidden file input -->
+      <input
+        type="file"
+        id="file-input"
+        accept="image/jpeg,image/png,image/gif,image/webp"
+        aria-label="Choose an image file"
+      />
+    </div>
+
+    <!-- ── File validation error ─────────────────────────────── -->
+    <div class="file-error" id="file-error" role="alert" aria-live="assertive">
+      <span aria-hidden="true">⚠️</span>
+      <span id="file-error-msg">Invalid file.</span>
+    </div>
+
+    <!-- ── Compression progress ──────────────────────────────── -->
+    <div class="compress-bar-wrap" id="compress-bar-wrap" aria-live="polite" aria-label="Compression progress">
+      <div class="compress-bar-header">
+        <span class="compress-bar-label">
+          <span class="spin" aria-hidden="true"></span>
+          Optimising image…
+        </span>
+        <span class="compress-bar-pct" id="compress-pct">0%</span>
+      </div>
+      <div class="compress-track"><div class="compress-fill" id="compress-fill"></div></div>
+      <span class="compress-sub" id="compress-sub">Resizing to 1080px…</span>
+    </div>
+
+    <!-- ── Tips card ─────────────────────────────────────────── -->
+    <div class="tips-card" id="tips-card" aria-label="Tips for a great post">
+      <span class="tips-icon" aria-hidden="true">✨</span>
+      <div class="tips-content">
+        <p class="tips-title">Tips for a great post</p>
+        <ul class="tips-list" role="list">
+          <li>Good lighting makes your pup shine ☀️</li>
+          <li>Action shots — mid-zoomies — get the most likes</li>
+          <li>Square or portrait crops look best in the feed</li>
+          <li>Write a fun caption with their name!</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ── Post form card ────────────────────────────────────── -->
+    <div class="form-card" id="form-card">
+      <div class="form-section">
+
+        <!-- Caption -->
+        <div class="caption-field">
+          <label class="caption-label" for="caption-input">
+            Caption
+            <span class="caption-meta">optional</span>
+          </label>
+          <textarea
+            class="caption-input"
+            id="caption-input"
+            placeholder="What's your pup up to? 🐾"
+            maxlength="320"
+            rows="3"
+            aria-describedby="char-counter"
+            spellcheck="true"
+          ></textarea>
+          <!-- Character counter with SVG arc -->
+          <div class="char-counter" id="char-counter" aria-live="polite" aria-label="Character count">
+            <svg class="char-arc" id="char-arc" viewBox="0 0 20 20" aria-hidden="true">
+              <circle cx="10" cy="10" r="8" fill="none" stroke="#f0e4d8" stroke-width="2.5"/>
+              <circle
+                id="arc-circle"
+                cx="10" cy="10" r="8"
+                fill="none"
+                stroke="#ff6b35"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-dasharray="50.27"
+                stroke-dashoffset="50.27"
+                transform="rotate(-90 10 10)"
+                style="transition: stroke-dashoffset 0.2s ease, stroke 0.2s ease;"
+              />
+            </svg>
+            <span class="count" id="char-count">0</span>
+            <span>/ 300</span>
+          </div>
+        </div>
+
+        <!-- Optional mood tags -->
+        <div>
+          <p style="font-size:0.82rem;font-weight:600;color:var(--clr-text-muted);margin-bottom:8px;">Mood</p>
+          <div class="tags-row" role="group" aria-label="Select post mood">
+            <button class="tag-chip" data-tag="happy"    type="button" aria-pressed="false">😄 Happy</button>
+            <button class="tag-chip" data-tag="playful"  type="button" aria-pressed="false">🎾 Playful</button>
+            <button class="tag-chip" data-tag="sleepy"   type="button" aria-pressed="false">😴 Sleepy</button>
+            <button class="tag-chip" data-tag="zoomies"  type="button" aria-pressed="false">💨 Zoomies</button>
+            <button class="tag-chip" data-tag="cute"     type="button" aria-pressed="false">🥺 Cute</button>
+          </div>
+        </div>
+
+        <div class="form-divider"></div>
+      </div>
+
+      <!-- Upload progress (inside card, shown during API calls) -->
+      <div class="upload-progress-wrap" id="upload-progress-wrap" aria-live="polite">
+        <div class="progress-label">
+          <span id="progress-label-text">Uploading…</span>
+          <span id="progress-pct-text">0%</span>
+        </div>
+        <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+        <div class="progress-step">
+          <span class="spin" aria-hidden="true" id="progress-spin"></span>
+          <span id="progress-step-text">Requesting upload URL…</span>
+        </div>
+      </div>
+
+      <!-- API error -->
+      <div class="api-error" id="api-error" role="alert" aria-live="assertive">
+        <span class="api-error-icon" aria-hidden="true">⚠️</span>
+        <span id="api-error-msg">Something went wrong. Please try again.</span>
+      </div>
+
+      <!-- Success -->
+      <div class="success-banner" id="success-banner" role="status" aria-live="polite">
+        <span aria-hidden="true">🎉</span>
+        <span>Post shared! Redirecting to feed…</span>
+      </div>
+
+      <!-- Submit -->
+      <div class="form-footer">
+        <button
+          class="submit-btn"
+          id="submit-btn"
+          type="button"
+          disabled
+          aria-label="Share your post"
+          aria-describedby="submit-status"
+        >
+          <div class="btn-spinner" id="btn-spinner" aria-hidden="true"></div>
+          <span id="submit-btn-text">📸 Share Post</span>
+        </button>
+        <span id="submit-status" class="visually-hidden">Add a photo to enable sharing</span>
+      </div>
+
+    </div><!-- /form-card -->
+
+  </main>
+
+  <!-- Toast container -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Hidden canvas for compression -->
+  <canvas id="compress-canvas" style="display:none" aria-hidden="true"></canvas>
+
+  <!-- ============================================================
+       JAVASCRIPT — Vanilla ES6+ IIFE, no globals
+       ============================================================ -->
+  <script>
+    (() => {
+      'use strict';
+
+      /* ──────────────────────────────────────────────────────────
+         CONFIG
+         ────────────────────────────────────────────────────────── */
+      const API_BASE = 'https://petsocial-api.chanduchandu1177.workers.dev';
+      const ENDPOINTS = {
+        generateUploadUrl: `${API_BASE}/generate-upload-url`,
+        createPost:        `${API_BASE}/create-post`,
+      };
+
+      const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+      const MAX_OUTPUT_WIDTH    = 1080;             // px
+      const TARGET_SIZE_BYTES   = 300 * 1024;       // 300 KB
+      const CAPTION_MAX         = 300;
+      const ALLOWED_TYPES       = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+      const REDIRECT_DELAY_MS   = 1800;
+
+      /* ──────────────────────────────────────────────────────────
+         TOKEN
+         ────────────────────────────────────────────────────────── */
+      const getToken = () => {
+        try { return localStorage.getItem('dogsocial_token'); }
+        catch { return null; }
+      };
+      const authHeaders = () => {
+        const t = getToken();
+        return t ? { Authorization: `Bearer ${t}` } : {};
+      };
+
+      /* Redirect to auth if not logged in */
+      if (!getToken()) {
+        window.location.replace('/auth.html');
+      }
+
+      /* ──────────────────────────────────────────────────────────
+         STATE
+         ────────────────────────────────────────────────────────── */
+      let compressedBlob   = null;   // Final WebP blob ready to upload
+      let selectedTag      = null;   // Mood tag
+      let isUploading      = false;
+
+      /* ──────────────────────────────────────────────────────────
+         DOM REFS
+         ────────────────────────────────────────────────────────── */
+      const uploadZone       = document.getElementById('upload-zone');
+      const fileInput        = document.getElementById('file-input');
+      const uploadPlaceholder= document.getElementById('upload-placeholder');
+      const previewWrap      = document.getElementById('preview-wrap');
+      const previewImg       = document.getElementById('preview-img');
+      const changeBtn        = document.getElementById('change-btn');
+      const removeBtn        = document.getElementById('remove-btn');
+      const compressionBadge = document.getElementById('compression-badge');
+      const compressBarWrap  = document.getElementById('compress-bar-wrap');
+      const compressFill     = document.getElementById('compress-fill');
+      const compressPct      = document.getElementById('compress-pct');
+      const compressSub      = document.getElementById('compress-sub');
+      const captionInput     = document.getElementById('caption-input');
+      const charCount        = document.getElementById('char-count');
+      const charCounter      = document.getElementById('char-counter');
+      const arcCircle        = document.getElementById('arc-circle');
+      const fileError        = document.getElementById('file-error');
+      const fileErrorMsg     = document.getElementById('file-error-msg');
+      const submitBtn        = document.getElementById('submit-btn');
+      const submitBtnText    = document.getElementById('submit-btn-text');
+      const btnSpinner       = document.getElementById('btn-spinner');
+      const headerPostBtn    = document.getElementById('header-post-btn');
+      const uploadProgressWrap = document.getElementById('upload-progress-wrap');
+      const progressFill     = document.getElementById('progress-fill');
+      const progressPctText  = document.getElementById('progress-pct-text');
+      const progressLabelText= document.getElementById('progress-label-text');
+      const progressStepText = document.getElementById('progress-step-text');
+      const apiErrorEl       = document.getElementById('api-error');
+      const apiErrorMsg      = document.getElementById('api-error-msg');
+      const successBanner    = document.getElementById('success-banner');
+      const canvas           = document.getElementById('compress-canvas');
+      const tipsCard         = document.getElementById('tips-card');
+
+      /* ──────────────────────────────────────────────────────────
+         TOAST
+         ────────────────────────────────────────────────────────── */
+      const showToast = (message, type = '') => {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast${type ? ' ' + type : ''}`;
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3200);
+      };
+
+      /* ──────────────────────────────────────────────────────────
+         FILE VALIDATION
+         ────────────────────────────────────────────────────────── */
+      const validateFile = (file) => {
+        if (!ALLOWED_TYPES.includes(file.type)) {
+          return 'Only JPG, PNG, GIF, or WebP images are allowed.';
+        }
+        if (file.size > MAX_FILE_SIZE_BYTES) {
+          return `File is too large (${(file.size / 1024 / 1024).toFixed(1)} MB). Maximum is 5 MB.`;
+        }
+        return null; // valid
+      };
+
+      const showFileError = (msg) => {
+        fileErrorMsg.textContent = msg;
+        fileError.classList.add('visible');
+      };
+      const clearFileError = () => fileError.classList.remove('visible');
+
+      /* ──────────────────────────────────────────────────────────
+         IMAGE COMPRESSION via Canvas API
+         Resize to max MAX_OUTPUT_WIDTH px, output WebP,
+         iteratively reduce quality until ≤ TARGET_SIZE_BYTES.
+         ────────────────────────────────────────────────────────── */
+      const compressImage = (file) => new Promise((resolve, reject) => {
+        setCompressionProgress(0, 'Loading image…');
+        compressBarWrap.classList.add('visible');
+
+        const img = new Image();
+        const objectUrl = URL.createObjectURL(file);
+
+        img.onload = async () => {
+          URL.revokeObjectURL(objectUrl);
+          setCompressionProgress(20, 'Resizing to 1080px…');
+
+          // Calculate dimensions
+          let { naturalWidth: w, naturalHeight: h } = img;
+          if (w > MAX_OUTPUT_WIDTH) {
+            h = Math.round(h * (MAX_OUTPUT_WIDTH / w));
+            w = MAX_OUTPUT_WIDTH;
+          }
+
+          canvas.width  = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+
+          setCompressionProgress(50, 'Converting to WebP…');
+
+          // Iteratively find best quality
+          let quality  = 0.85;
+          let blob     = null;
+          let attempts = 0;
+          const maxAttempts = 8;
+
+          while (attempts < maxAttempts) {
+            blob = await new Promise((res) => canvas.toBlob(res, 'image/webp', quality));
+            const pct = 50 + Math.round((attempts / maxAttempts) * 45);
+            setCompressionProgress(pct, `Quality ${Math.round(quality * 100)}% — ${(blob.size / 1024).toFixed(0)} KB`);
+
+            if (blob.size <= TARGET_SIZE_BYTES || quality <= 0.25) break;
+            quality  -= 0.08;
+            attempts += 1;
+          }
+
+          setCompressionProgress(100, `Done! ${(blob.size / 1024).toFixed(0)} KB`);
+          setTimeout(() => compressBarWrap.classList.remove('visible'), 800);
+
+          resolve({ blob, width: w, height: h, originalSize: file.size });
+        };
+
+        img.onerror = () => {
+          URL.revokeObjectURL(objectUrl);
+          compressBarWrap.classList.remove('visible');
+          reject(new Error('Could not load image. The file may be corrupted.'));
+        };
+
+        img.src = objectUrl;
+      });
+
+      const setCompressionProgress = (pct, label) => {
+        compressFill.style.width = `${pct}%`;
+        compressPct.textContent  = `${pct}%`;
+        compressSub.textContent  = label;
+      };
+
+      /* ──────────────────────────────────────────────────────────
+         PROCESS FILE: validate → compress → preview
+         ────────────────────────────────────────────────────────── */
+      const processFile = async (file) => {
+        clearFileError();
+        clearApiError();
+        resetUploadState();
+
+        const err = validateFile(file);
+        if (err) { showFileError(err); return; }
+
+        // Show compression bar
+        try {
+          const result = await compressImage(file);
+          compressedBlob = result.blob;
+
+          // Show preview
+          const previewUrl = URL.createObjectURL(compressedBlob);
+          previewImg.src = previewUrl;
+          previewImg.onload = () => URL.revokeObjectURL(previewUrl);
+
+          uploadZone.classList.add('has-image');
+          uploadPlaceholder.style.display = 'none';
+          previewWrap.classList.add('visible');
+          tipsCard.style.display = 'none'; // Hide tips once image selected
+
+          // Show compression badge
+          const savedPct = Math.round((1 - result.blob.size / result.originalSize) * 100);
+          compressionBadge.textContent = `✅ ${(result.blob.size / 1024).toFixed(0)} KB${savedPct > 0 ? ` (${savedPct}% smaller)` : ''}`;
+          compressionBadge.classList.add('visible');
+
+          enableSubmit();
+        } catch (e) {
+          showFileError(e.message ?? 'Failed to process image.');
+          resetUploadZone();
+        }
+      };
+
+      /* ──────────────────────────────────────────────────────────
+         UI HELPERS
+         ────────────────────────────────────────────────────────── */
+      const enableSubmit = () => {
+        submitBtn.disabled = false;
+        headerPostBtn.disabled = false;
+        document.getElementById('submit-status').textContent = 'Ready to share';
+        document.getElementById('header-post-status').textContent = 'Click to share your post';
+      };
+      const disableSubmit = () => {
+        submitBtn.disabled = true;
+        headerPostBtn.disabled = true;
+      };
+
+      const resetUploadZone = () => {
+        uploadZone.classList.remove('has-image');
+        uploadPlaceholder.style.display = '';
+        previewWrap.classList.remove('visible');
+        previewImg.src = '';
+        compressionBadge.classList.remove('visible');
+        compressedBlob = null;
+        disableSubmit();
+        tipsCard.style.display = '';
+      };
+
+      const resetUploadState = () => {
+        uploadProgressWrap.classList.remove('visible');
+        apiErrorEl.classList.remove('visible');
+        successBanner.classList.remove('visible');
+        setProgress(0, '', '');
+      };
+
+      const clearApiError = () => apiErrorEl.classList.remove('visible');
+
+      const showApiError = (msg) => {
+        apiErrorMsg.textContent = msg;
+        apiErrorEl.classList.add('visible');
+      };
+
+      const setProgress = (pct, label, step) => {
+        progressFill.style.width  = `${pct}%`;
+        progressPctText.textContent = `${pct}%`;
+        if (label) progressLabelText.textContent = label;
+        if (step)  progressStepText.textContent  = step;
+      };
+
+      const setLoading = (loading) => {
+        isUploading = loading;
+        submitBtn.disabled = loading;
+        headerPostBtn.disabled = loading;
+        btnSpinner.classList.toggle('visible', loading);
+        submitBtnText.style.opacity = loading ? '0' : '1';
+        submitBtn.setAttribute('aria-busy', String(loading));
+        if (!loading) {
+          btnSpinner.classList.remove('visible');
+          submitBtnText.style.opacity = '1';
+        }
+      };
+
+      /* ──────────────────────────────────────────────────────────
+         CAPTION: CHAR COUNTER + ARC
+         ────────────────────────────────────────────────────────── */
+      const CIRCUMFERENCE = 2 * Math.PI * 8; // r=8 → 50.27
+
+      captionInput.addEventListener('input', () => {
+        // Strip to safe length before rendering count (belt-and-suspenders)
+        const raw = captionInput.value;
+        const len = raw.length;
+        const capped = Math.min(len, CAPTION_MAX);
+
+        charCount.textContent = capped;
+
+        const ratio = capped / CAPTION_MAX;
+        const offset = CIRCUMFERENCE * (1 - ratio);
+        arcCircle.style.strokeDashoffset = offset;
+
+        // Colour states
+        charCounter.classList.remove('warning', 'over');
+        if (ratio >= 1) {
+          charCounter.classList.add('over');
+          arcCircle.style.stroke = '#c62828';
+          captionInput.classList.add('over-limit');
+        } else if (ratio >= 0.85) {
+          charCounter.classList.add('warning');
+          arcCircle.style.stroke = '#e65100';
+          captionInput.classList.remove('over-limit');
+        } else {
+          arcCircle.style.stroke = '#ff6b35';
+          captionInput.classList.remove('over-limit');
+        }
+      });
+
+      /* ──────────────────────────────────────────────────────────
+         MOOD TAGS
+         ────────────────────────────────────────────────────────── */
+      document.querySelectorAll('.tag-chip').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const tag = btn.dataset.tag;
+          if (selectedTag === tag) {
+            selectedTag = null;
+            btn.classList.remove('selected');
+            btn.setAttribute('aria-pressed', 'false');
+          } else {
+            document.querySelectorAll('.tag-chip').forEach((b) => {
+              b.classList.remove('selected');
+              b.setAttribute('aria-pressed', 'false');
+            });
+            selectedTag = tag;
+            btn.classList.add('selected');
+            btn.setAttribute('aria-pressed', 'true');
+          }
+        });
+      });
+
+      /* ──────────────────────────────────────────────────────────
+         FILE INPUT & DRAG-DROP
+         ────────────────────────────────────────────────────────── */
+
+      // Click on zone → open picker
+      uploadZone.addEventListener('click', (e) => {
+        if (
+          e.target.closest('#change-btn') ||
+          e.target.closest('#remove-btn') ||
+          uploadZone.classList.contains('has-image')
+        ) return;
+        fileInput.click();
+      });
+
+      // Keyboard: Enter / Space to open picker
+      uploadZone.addEventListener('keydown', (e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && !uploadZone.classList.contains('has-image')) {
+          e.preventDefault();
+          fileInput.click();
+        }
+      });
+
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files[0]) processFile(fileInput.files[0]);
+        fileInput.value = ''; // Reset so same file can be re-selected
+      });
+
+      // Change button
+      changeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        fileInput.click();
+      });
+
+      // Remove button
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        resetUploadZone();
+        resetUploadState();
+        clearFileError();
+      });
+
+      // Drag and drop
+      uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (!uploadZone.classList.contains('has-image')) {
+          uploadZone.classList.add('drag-over');
+        }
+      });
+      uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+      uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('drag-over');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) processFile(file);
+      });
+
+      /* ──────────────────────────────────────────────────────────
+         SANITIZE CAPTION (prevent XSS before sending to API)
+         ────────────────────────────────────────────────────────── */
+      const sanitizeCaption = (str) =>
+        String(str ?? '')
+          .trim()
+          .slice(0, CAPTION_MAX)
+          .replace(/[<>"']/g, (c) => ({ '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+
+      /* ──────────────────────────────────────────────────────────
+         API HELPERS
+         ────────────────────────────────────────────────────────── */
+      const apiPost = async (url, body) => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', ...authHeaders() },
+            body:    JSON.stringify(body),
+            signal:  controller.signal,
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.message ?? data.error ?? `Error ${res.status}`);
+          return data;
+        } finally {
+          clearTimeout(timeout);
+        }
+      };
+
+      /**
+       * Upload blob to a pre-signed R2 URL via PUT.
+       * Uses XHR for upload progress tracking.
+       */
+      const uploadToR2 = (signedUrl, blob) => new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', signedUrl, true);
+        xhr.setRequestHeader('Content-Type', 'image/webp');
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable) {
+            const pct = 30 + Math.round((e.loaded / e.total) * 55); // 30–85%
+            setProgress(pct, 'Uploading to storage…', `${(e.loaded / 1024).toFixed(0)} / ${(e.total / 1024).toFixed(0)} KB`);
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) resolve();
+          else reject(new Error(`Upload failed: HTTP ${xhr.status}`));
+        };
+        xhr.onerror   = () => reject(new Error('Upload failed. Check your connection.'));
+        xhr.ontimeout = () => reject(new Error('Upload timed out.'));
+        xhr.timeout   = 60000;
+        xhr.send(blob);
+      });
+
+      /* ──────────────────────────────────────────────────────────
+         SUBMIT FLOW
+         ────────────────────────────────────────────────────────── */
+      const handleSubmit = async () => {
+        if (isUploading || !compressedBlob) return;
+
+        const caption = sanitizeCaption(captionInput.value);
+
+        // Final validation
+        if (caption.length > CAPTION_MAX) {
+          showToast('Caption is too long (max 300 characters).', 'error');
+          return;
+        }
+
+        clearApiError();
+        setLoading(true);
+        uploadProgressWrap.classList.add('visible');
+        setProgress(5, 'Preparing upload…', 'Requesting signed URL…');
+
+        try {
+          /* ── Step 1: Get signed R2 upload URL ── */
+          setProgress(10, 'Requesting upload URL…', 'Connecting to storage…');
+          const filename = `dog_${Date.now()}.webp`;
+
+          let signedUrl, imageKey;
+          try {
+            const urlData = await apiPost(ENDPOINTS.generateUploadUrl, { filename, contentType: 'image/webp' });
+            signedUrl = urlData.uploadUrl ?? urlData.url ?? urlData.signedUrl;
+            imageKey  = urlData.key ?? urlData.imageKey ?? filename;
+            if (!signedUrl) throw new Error('No upload URL returned by server.');
+          } catch (e) {
+            throw new Error(`Could not get upload URL: ${e.message}`);
+          }
+
+          setProgress(25, 'Upload URL received ✓', 'Starting upload…');
+
+          /* ── Step 2: Upload to R2 ── */
+          await uploadToR2(signedUrl, compressedBlob);
+          setProgress(85, 'Image uploaded ✓', 'Saving post…');
+
+          /* ── Step 3: Save post metadata ── */
+          await apiPost(ENDPOINTS.createPost, {
+            imageKey,
+            caption,
+            tag: selectedTag ?? null,
+            width:  canvas.width,
+            height: canvas.height,
+          });
+
+          setProgress(100, 'Post created! 🎉', 'All done');
+
+          // Show success
+          uploadProgressWrap.classList.remove('visible');
+          successBanner.classList.add('visible');
+          showToast('Post shared with the pack! 🐾', 'success');
+
+          // Redirect after short delay
+          setTimeout(() => window.location.replace('/index.html'), REDIRECT_DELAY_MS);
+
+        } catch (err) {
+          const msg = err.name === 'AbortError'
+            ? 'Request timed out. Check your connection and try again.'
+            : err.message ?? 'Something went wrong. Please try again.';
+
+          uploadProgressWrap.classList.remove('visible');
+          showApiError(msg);
+          setLoading(false);
+          if (compressedBlob) enableSubmit();
+        }
+      };
+
+      submitBtn.addEventListener('click', handleSubmit);
+      headerPostBtn.addEventListener('click', handleSubmit);
+
+      /* ──────────────────────────────────────────────────────────
+         KEYBOARD: Ctrl/Cmd + Enter submits
+         ────────────────────────────────────────────────────────── */
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !submitBtn.disabled) {
+          e.preventDefault();
+          handleSubmit();
+        }
+      });
+
+      /* ──────────────────────────────────────────────────────────
+         PASTE IMAGE from clipboard
+         ────────────────────────────────────────────────────────── */
+      document.addEventListener('paste', (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (const item of items) {
+          if (item.type.startsWith('image/')) {
+            const file = item.getAsFile();
+            if (file) { processFile(file); break; }
+          }
+        }
+      });
+
+    })(); // End IIFE
+  </script>
+
+</body>
+</html>
