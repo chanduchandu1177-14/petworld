@@ -511,7 +511,7 @@
       };
 
       /* Already logged in → skip auth page */
-      if (tokenStore.exists()) { window.location.replace(REDIRECT_HOME); }
+      sessionStorage
 
       /* ── VALIDATION ─────────────────────────────────────────── */
       const isValidEmail    = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.trim());
