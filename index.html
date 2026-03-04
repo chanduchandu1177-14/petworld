@@ -772,11 +772,12 @@
          CONFIG
          ────────────────────────────────────────────────────────── */
       const API_BASE = 'https://petsocial-api.chanduchandu1177.workers.dev';
-      const ENDPOINTS = {
-        posts:      `${API_BASE}/posts`,
-        likePost:   `${API_BASE}/like-post`,
-        addComment: `${API_BASE}/add-comment`,
-      };
+
+const ENDPOINTS = {
+  posts:      `${API_BASE}/posts`,
+  likePost:   `${API_BASE}/like`,
+  addComment: `${API_BASE}/comment`,
+};
 
       // Placeholder avatar for current user (would come from auth session)
       const CURRENT_USER_AVATAR = 'https://api.dicebear.com/7.x/bottts/svg?seed=currentUser&backgroundColor=ffb347';
