@@ -411,6 +411,11 @@
       color: var(--clr-text-muted);
       margin-top: 1px;
     }
+    .post-time-left {
+      font-size: 0.72rem; font-weight: 600; color: var(--clr-accent);
+      background: rgba(255,107,53,0.10); padding: 2px 8px; border-radius: 20px;
+      margin-top: 2px; display: inline-block;
+    }
 
     .post-options-btn {
       width: 36px; height: 36px;
@@ -619,6 +624,7 @@
     }
     .toast.success { background: #2e7d32; }
     .toast.error   { background: #b71c1c; }
+    .toast.info    { background: var(--clr-accent); }
     @keyframes toastIn  { from { opacity:0; transform: translateY(12px) scale(0.94); } to { opacity:1; transform: translateY(0) scale(1); } }
     @keyframes toastOut { from { opacity:1; } to { opacity:0; transform: translateY(8px); } }
 
@@ -665,8 +671,8 @@
       <!-- Desktop nav -->
       <nav class="nav-links" aria-label="Main navigation">
         <a href="/" class="nav-link active" aria-current="page">Home</a>
-        <a href="/create" class="nav-link">Create Post</a>
-        <a href="/profile" class="nav-link">Profile</a>
+        <a href="/create-post.html" class="nav-link">Create Post</a>
+        <span id="nav-auth-area"></span>
       </nav>
 
       <!-- Hamburger (mobile) -->
@@ -693,6 +699,15 @@
        MAIN CONTENT
        ============================================================ -->
   <main class="main-content" id="main" role="main">
+
+    <!-- Auth banner — shown when not logged in -->
+    <div id="auth-banner" style="display:none; background:var(--clr-surface); border:1.5px solid var(--clr-border); border-radius:20px; padding:18px 22px; margin-bottom:20px; display:flex; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap;">
+      <p style="font-size:.93rem; color:var(--clr-text-muted);"><strong style="color:var(--clr-text)">Join DogSocial</strong> to like posts and comment.</p>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <a href="/auth.html" style="font-size:.85rem;font-weight:600;padding:8px 18px;border-radius:50px;border:1.5px solid var(--clr-accent);color:var(--clr-accent);">Sign in</a>
+        <a href="/auth.html" style="font-size:.85rem;font-weight:600;padding:8px 18px;border-radius:50px;background:var(--clr-accent);color:#fff;">Create account</a>
+      </div>
+    </div>
 
     <!-- Feed header -->
     <div class="feed-header">
@@ -768,19 +783,53 @@
     (() => {
       'use strict';
 
+      // ── FIX 7: HTTPS enforcement ──────────────────────────────────
+      if (location.protocol === 'http:' &&
+          location.hostname !== 'localhost' &&
+          location.hostname !== '127.0.0.1') {
+        location.replace('https:' + location.href.slice(5));
+      }
+
       /* ──────────────────────────────────────────────────────────
          CONFIG
          ────────────────────────────────────────────────────────── */
       const API_BASE = 'https://petsocial-api.chanduchandu1177.workers.dev';
+      const ENDPOINTS = {
+        posts:      `${API_BASE}/posts`,
+        like:       `${API_BASE}/like`,       // FIX 1: was /like-post
+        comment:    `${API_BASE}/comment`,    // FIX 1: was /add-comment
+      };
 
-const ENDPOINTS = {
-  posts:      `${API_BASE}/posts`,
-  likePost:   `${API_BASE}/like`,
-  addComment: `${API_BASE}/comment`,
-};
+      // ── FIX 4: No external DiceBear dependency. Read from sessionStorage.
+      // ── FIX 8: session object gates like/comment behind auth check.
+      const SESSION_KEY = 'dogsocial_token';
+      const USER_KEY    = 'dogsocial_user';
+      const session = (() => {
+        const getToken  = () => { try { return sessionStorage.getItem(SESSION_KEY); } catch { return null; } };
+        const getUser   = () => { try { const r = sessionStorage.getItem(USER_KEY); return r ? JSON.parse(r) : null; } catch { return null; } };
+        const isLoggedIn = () => Boolean(getToken());
+        const authHeader = () => { const t = getToken(); return t ? { Authorization: `Bearer ${t}` } : {}; };
+        const logout = () => {
+          try { sessionStorage.removeItem(SESSION_KEY); sessionStorage.removeItem(USER_KEY); } catch {}
+          window.location.replace('/auth.html');
+        };
+        return { getToken, getUser, isLoggedIn, authHeader, logout };
+      })();
 
-      // Placeholder avatar for current user (would come from auth session)
-      const CURRENT_USER_AVATAR = 'https://api.dicebear.com/7.x/bottts/svg?seed=currentUser&backgroundColor=ffb347';
+      // FIX 4: inline SVG avatar — no external request
+      const defaultAvatar = (seed = '') => {
+        const colors = ['#ffb347','#ff6b35','#ffd166','#06d6a0','#118ab2'];
+        const color  = colors[Math.abs([...seed].reduce((a,c) => a + c.charCodeAt(0), 0)) % colors.length];
+        const letter = (seed[0] || '?').toUpperCase();
+        return `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'>` +
+               `<circle cx='22' cy='22' r='22' fill='${encodeURIComponent(color)}'/>` +
+               `<text x='50%25' y='57%25' text-anchor='middle' font-size='20' font-family='Arial' fill='%23fff'>${encodeURIComponent(letter)}</text>` +
+               `</svg>`;
+      };
+      const currentUser   = session.getUser();
+      const CURRENT_USER_AVATAR = currentUser
+        ? (currentUser.avatar_url || defaultAvatar(currentUser.username || 'me'))
+        : defaultAvatar('guest');
 
       /* ──────────────────────────────────────────────────────────
          HELPERS: DOM
@@ -847,23 +896,33 @@ const ENDPOINTS = {
        * @param {RequestInit} [options]
        * @returns {Promise<any>}
        */
+      // FIX 1: Auth header injected automatically on every call (covers /posts, /like, /comment).
+      // FIX 2: Strict JSON — non-JSON server response throws a real error, not silent {}.
+      // FIX 5: /posts also gets auth so Worker's optionalAuth returns correct is_liked state.
       const apiFetch = async (url, options = {}) => {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 10000);
+        const timeout    = setTimeout(() => controller.abort(), 10000);
         try {
           const res = await fetch(url, {
             ...options,
             signal: controller.signal,
             headers: {
               'Content-Type': 'application/json',
+              ...session.authHeader(),       // FIX 1+5: auth on every request
               ...(options.headers ?? {}),
             },
           });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            throw new Error(err.message || `HTTP ${res.status}`);
+          // FIX 2: strict JSON parse — surfaces real errors (e.g. Cloudflare HTML error pages)
+          let data;
+          try {
+            data = await res.json();
+          } catch {
+            throw new Error(`Server returned non-JSON (HTTP ${res.status}). Check Worker logs.`);
           }
-          return await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || data.message || `HTTP ${res.status}`);
+          }
+          return data;
         } finally {
           clearTimeout(timeout);
         }
@@ -876,10 +935,11 @@ const ENDPOINTS = {
        * Like a post.
        * @param {string|number} postId
        */
+      // FIX 3a: endpoint key = .like (not .likePost), field = post_id (not postId)
       const likePost = (postId) =>
-        apiFetch(ENDPOINTS.likePost, {
+        apiFetch(ENDPOINTS.like, {
           method: 'POST',
-          body: JSON.stringify({ postId }),
+          body: JSON.stringify({ post_id: postId }),
         });
 
       /**
@@ -887,10 +947,14 @@ const ENDPOINTS = {
        * @param {string|number} postId
        * @param {string} text
        */
+      // FIX 3b: endpoint key = .comment, fields = post_id + comment (not postId/text)
       const addComment = (postId, text) =>
-        apiFetch(ENDPOINTS.addComment, {
+        apiFetch(ENDPOINTS.comment, {
           method: 'POST',
-          body: JSON.stringify({ postId, text }),
+          body: JSON.stringify({
+            post_id: postId,  // Worker reads: body.post_id
+            comment: text,    // Worker reads: body.comment  ← NOT body.text
+          }),
         });
 
       /* ──────────────────────────────────────────────────────────
@@ -915,6 +979,7 @@ const ENDPOINTS = {
         const imageUrl      = escapeHTML(post.image_url ?? post.imageUrl ?? '');
         const caption       = escapeHTML(post.caption ?? '');
         const timestamp     = formatTime(post.created_at ?? post.createdAt ?? Date.now());
+        const timeLeftStr   = escapeHTML(post.time_left ?? post.timeLeft ?? ''); // FIX 10
         // Real API uses likes_count / comments_count
         const likeCount     = Number(post.likes_count ?? post.like_count ?? post.likes ?? 0);
         const commentCount  = Number(post.comments_count ?? post.comment_count ?? post.comments?.length ?? 0);
@@ -934,7 +999,7 @@ const ENDPOINTS = {
         const commentsHTML = comments.map((c) => `
           <div class="comment-item">
             <span class="comment-user">${escapeHTML(c.username ?? 'user')}</span>
-            <span class="comment-text">${escapeHTML(c.text ?? '')}</span>
+            <span class="comment-text">${escapeHTML(c.comment ?? c.text ?? '')}</span>
           </div>
         `).join('');
 
@@ -964,6 +1029,7 @@ const ENDPOINTS = {
             <div class="post-meta">
               <div class="post-username">${username}</div>
               <time class="post-timestamp" datetime="${escapeHTML(String(post.created_at ?? post.createdAt ?? ''))}">${timestamp}</time>
+              ${timeLeftStr ? `<span class="post-time-left">⏱ ${timeLeftStr}</span>` : ''}
             </div>
             <button class="post-options-btn" aria-label="Post options" aria-haspopup="true">
               ···
@@ -1094,6 +1160,11 @@ const ENDPOINTS = {
        * @param {HTMLButtonElement} btn
        */
       const handleLike = async (card, btn) => {
+        // FIX 8: auth gate — prevent optimistic update when not logged in
+        if (!session.isLoggedIn()) {
+          showToast('Sign in to like posts 🐾', 'info');
+          return;
+        }
         const postId = card.dataset.postId;
         const state  = postState.get(postId);
         if (!state || state.pendingLike) return;
@@ -1141,6 +1212,11 @@ const ENDPOINTS = {
        * @param {HTMLInputElement} input
        */
       const handleComment = async (card, input) => {
+        // FIX 8: auth gate — prevent comment attempt when not logged in
+        if (!session.isLoggedIn()) {
+          showToast('Sign in to comment 🐾', 'info');
+          return;
+        }
         const text   = input.value.trim();
         const postId = card.dataset.postId;
         const state  = postState.get(postId);
@@ -1213,7 +1289,7 @@ const ENDPOINTS = {
        * @param {HTMLElement} card
        */
       const handleShare = async (card) => {
-        const url   = window.location.origin + `/post/${card.dataset.postId}`;
+        const url   = window.location.origin + `/post/${encodeURIComponent(card.dataset.postId)}`; // FIX 9
         const title = 'Check out this dog post on DogSocial!';
         if (navigator.share) {
           try { await navigator.share({ title, url }); } catch (e) { /* user cancelled */ }
@@ -1341,7 +1417,36 @@ const ENDPOINTS = {
       /* ──────────────────────────────────────────────────────────
          INIT
          ────────────────────────────────────────────────────────── */
+      // Render auth state in nav header + show/hide auth banner
+      const renderNavAuth = () => {
+        const user    = session.getUser();
+        const loggedIn = session.isLoggedIn();
+        const area     = document.getElementById('nav-auth-area');
+        const drawer   = document.getElementById('nav-drawer-auth');
+        const banner   = document.getElementById('auth-banner');
+
+        if (loggedIn && user) {
+          const uname = escapeHTML(user.username || '');
+          const html  = `<span style="font-size:.88rem;font-weight:500;color:var(--clr-text-muted);display:flex;align-items:center;gap:8px;">
+            <img src="${defaultAvatar(user.username||'')}" width="28" height="28"
+              style="border-radius:50%;border:2px solid #ffb347;" alt="${uname}"/>
+            ${uname}</span>
+            <button onclick="window.DogSocial.session.logout()"
+              style="font-size:.82rem;font-weight:600;color:var(--clr-text-muted);padding:6px 12px;border-radius:50px;border:1.5px solid var(--clr-border);">Sign out</button>`;
+          if (area)   area.innerHTML   = html;
+          if (drawer) drawer.innerHTML = `<a href="/auth.html" class="nav-link">🐾 My Profile</a>` + html;
+          if (banner) banner.style.display = 'none';
+        } else {
+          const html = `<a href="/auth.html" class="nav-link">Sign in</a>`;
+          if (area)   area.innerHTML   = html;
+          if (drawer) drawer.innerHTML = html;
+          if (banner) banner.style.display = 'flex';
+        }
+      };
+      window.DogSocial = { session };
+
       const init = () => {
+        renderNavAuth();
         initMobileNav();
         initRetry();
         attachFeedListeners();
