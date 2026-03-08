@@ -5,55 +5,78 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PetStory | Global</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f0f14; color: white; }
+        .glass { background: rgba(22, 22, 29, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+    </style>
 </head>
-<body class="bg-[#0f0f14] text-white p-6">
-    <h1 class="text-xl font-black italic text-indigo-500 mb-10">PETSTORY</h1>
+<body class="p-4 flex flex-col items-center">
+    <header class="w-full max-w-md py-6 flex justify-between items-center">
+        <h1 class="text-xl font-black italic text-indigo-500 uppercase">PetStory</h1>
+        <span class="text-[10px] bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full border border-indigo-500/20 font-bold">12H FEED</span>
+    </header>
 
-    <div class="max-w-md mx-auto bg-white/5 p-6 rounded-3xl border border-white/10 mb-12">
-        <input id="petName" type="text" placeholder="Pet Name..." class="w-full bg-black p-4 rounded-xl mb-4 text-white">
-        <select id="petType" class="w-full bg-black p-4 rounded-xl mb-4 text-white/50">
-            <option value="dog">Dog (Bone 🦴)</option>
-            <option value="cat">Cat (Fish 🐟)</option>
-        </select>
-        <button onclick="submitPet()" class="w-full bg-indigo-600 py-4 rounded-xl font-bold">BEAM UP 🚀</button>
-    </div>
+    <main class="w-full max-w-md space-y-8">
+        <section class="glass p-6 rounded-[2rem] space-y-4">
+            <input id="petName" type="text" placeholder="Pet Name..." class="w-full bg-black/40 border border-white/10 rounded-2xl p-4 focus:outline-none focus:border-indigo-500">
+            <select id="petType" class="w-full bg-black/40 border border-white/10 rounded-2xl p-4">
+                <option value="dog">Dog (Bone 🦴)</option>
+                <option value="cat">Cat (Fish 🐟)</option>
+                <option value="bird">Bird (Seed 🌻)</option>
+            </select>
+            <button onclick="submitPet()" class="w-full bg-indigo-600 py-4 rounded-2xl font-black tracking-widest active:scale-95 transition">BEAM UP 🚀</button>
+        </section>
 
-    <div class="max-w-md mx-auto">
-        <h2 class="text-sm font-bold text-white/40 mb-6 uppercase tracking-widest">Live Feed</h2>
-        <div id="feed" class="space-y-6">
-            <p class="text-center text-white/20 italic">Loading pets...</p>
-        </div>
-    </div>
+        <section>
+            <h2 class="text-xs font-bold text-white/30 uppercase tracking-[0.2em] mb-6">Live Rankings</h2>
+            <div id="petFeed" class="space-y-4">
+                <p class="text-center text-white/10 animate-pulse">Scanning the Edge...</p>
+            </div>
+        </section>
+    </main>
 
     <script>
-        // Logic to Save a Pet
         async function submitPet() {
             const name = document.getElementById('petName').value;
             const type = document.getElementById('petType').value;
-            const response = await fetch('/api/submit', {
+            if(!name) return alert("Name required");
+
+            const res = await fetch('/api/submit', {
                 method: 'POST',
                 body: JSON.stringify({ name, pet_type: type })
             });
-            if (response.ok) { alert("Success!"); loadFeed(); } 
-            else { alert("Error: Check D1 bindings in Cloudflare Settings"); }
+
+            if(res.ok) { loadFeed(); document.getElementById('petName').value = ""; }
         }
 
-        // Logic to Load and Show Pets
         async function loadFeed() {
             const res = await fetch('/api/feed');
             const pets = await res.json();
-            const feedDiv = document.getElementById('feed');
-            feedDiv.innerHTML = pets.map(p => `
-                <div class="bg-white/5 p-4 rounded-2xl border border-white/5 flex justify-between items-center">
+            const feed = document.getElementById('petFeed');
+            
+            if(pets.length === 0) {
+                feed.innerHTML = '<p class="text-center text-white/20 py-10">No pets beamed up yet. Be the first!</p>';
+                return;
+            }
+
+            feed.innerHTML = pets.map(p => `
+                <div class="glass p-5 rounded-3xl flex justify-between items-center border border-white/5">
                     <div>
-                        <p class="font-bold">${p.name}</p>
-                        <p class="text-xs text-white/40 uppercase">${p.pet_type}</p>
+                        <h3 class="font-bold text-lg">${p.name}</h3>
+                        <p class="text-[10px] text-white/40 uppercase tracking-widest">${p.pet_type}</p>
                     </div>
-                    <div class="text-xl">${p.pet_type === 'dog' ? '🦴' : '🐟'}</div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-mono text-indigo-400">${p.bones || 0}</span>
+                        <button class="bg-white/5 p-3 rounded-2xl border border-white/10 hover:bg-white/10 transition">
+                            ${p.pet_type === 'dog' ? '🦴' : p.pet_type === 'cat' ? '🐟' : '🌻'}
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
-        loadFeed(); // Run this when the page opens
+
+        loadFeed(); // Initial load
+        setInterval(loadFeed, 10000); // Auto-refresh every 10 seconds
     </script>
 </body>
 </html>
