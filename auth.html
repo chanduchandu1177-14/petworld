@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join PetStory</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>body { background-color: #0f0f14; color: white; }</style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-6">
+    <div class="w-full max-w-sm bg-white/5 p-8 rounded-[2.5rem] border border-white/10 shadow-2xl">
+        <h1 class="text-2xl font-black italic text-indigo-500 mb-2 text-center">PETSTORY</h1>
+        <p class="text-center text-white/40 text-xs mb-8 tracking-widest uppercase">Member Portal</p>
+
+        <div id="authBox" class="space-y-4">
+            <input id="email" type="email" placeholder="Gmail Address" class="w-full bg-black/40 border border-white/10 rounded-2xl p-4 focus:border-indigo-500 outline-none">
+            <input id="username" type="text" placeholder="Username" class="w-full bg-black/40 border border-white/10 rounded-2xl p-4 focus:border-indigo-500 outline-none">
+            <input id="password" type="password" placeholder="Password" class="w-full bg-black/40 border border-white/10 rounded-2xl p-4 focus:border-indigo-500 outline-none">
+            
+            <button onclick="handleSignup()" class="w-full bg-indigo-600 py-4 rounded-2xl font-bold hover:bg-indigo-500 transition">SIGN UP</button>
+            <p class="text-center text-[10px] text-white/20">Already a member? <a href="#" class="text-indigo-400">Login</a></p>
+        </div>
+    </div>
+
+    <script>
+        async function handleSignup() {
+            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const res = await fetch('/api/signup', {
+                method: 'POST',
+                body: JSON.stringify({ email, username, password })
+            });
+
+            if (res.ok) {
+                alert("Verification email sent to your Gmail!");
+            } else {
+                const err = await res.json();
+                alert(err.error);
+            }
+        }
+    </script>
+</body>
+</html>
