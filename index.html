@@ -1,12 +1,49 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Simple Website</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PetStory | Global</title>
+<script src=""></script>
+<style>
+body { background-color: #0f0f14; color: white; font-family: sans-serif; }
+.glass { background: rgba(22, 22, 29, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+</style>
 </head>
-<body>
-    <h1>Welcome to My Page</h1>
-    <p>This is a simple paragraph of text on my new website.</p>
+<body class="p-4">
+<header class="flex justify-between items-center mb-10 py-4 max-w-md mx-auto">
+<h1 class="text-xl font-black italic text-indigo-500 tracking-tighter uppercase">PetStory</h1>
+</header>
+<main class="max-w-md mx-auto space-y-6">
+<section class="glass p-8 rounded-[2.5rem] space-y-5 shadow-2xl">
+<h2 class="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em]">Beam Up Your Pet</h2>
+<input id="petName" type="text" placeholder="Pet Name..." class="w-full bg-black/40 border border-white/10 rounded-2xl p-5 focus:outline-none focus:border-indigo-500 transition-all">
+<select id="petType" class="w-full bg-black/40 border border-white/10 rounded-2xl p-5 text-white/50">
+<option value="dog">Dog (Bone 123)</option>
+<option value="cat">Cat (Fish 123)</option>
+<option value="bird">Bird (Seed 123)</option>
+</select>
+<button onclick="submitPet()" class="w-full bg-indigo-600 hover:bg-indigo-500 py-5 rounded-2xl font-black text-sm tracking-widest transition-all active:scale-95 shadow-lg shadow-indigo-500/20">BEAM UP</button>
+</section>
+</main>
+<script>
+async function submitPet() {
+const name = document.getElementById('petName').value;
+const type = document.getElementById('petType').value;
+if(!name) return alert("Please name your pet!");
+const response = await fetch('/api/submit', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ name: name, pet_type: type })
+});
+if (response.ok) {
+alert("Pet Beamed Up!");
+document.getElementById('petName').value = "";
+} else {
+alert("Error: Check D1 bindings in Cloudflare Settings");
+}
+}
+</script>
 </body>
 </html>
