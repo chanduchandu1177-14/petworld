@@ -77,6 +77,19 @@
 
         loadFeed(); // Initial load
         setInterval(loadFeed, 10000); // Auto-refresh every 10 seconds
+        async function votePet(petId) {
+    // This sends the vote to the Cloudflare Function
+    const res = await fetch('/api/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ petId: petId })
+    });
+
+    if (res.ok) {
+        // Refresh the feed immediately to show the new score
+        loadFeed();
+    }
+}
     </script>
 </body>
 </html>
