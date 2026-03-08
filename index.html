@@ -3,100 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PetStory | Global</title>
+    <title>PetStory | Global Celebrity Feed</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #0f0f14; color: white; }
-        .glass { background: rgba(22, 22, 29, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); }
+        body { background-color: #0f0f14; color: white; scroll-behavior: smooth; }
+        .glass { background: rgba(22, 22, 29, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); }
+        .nav-link { font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; color: rgba(255,255,255,0.5); transition: all 0.3s; }
+        .nav-link:hover { color: #6366f1; }
     </style>
 </head>
-<body class="p-4 flex flex-col items-center">
-    <header class="w-full max-w-md py-6 flex justify-between items-center">
-        <h1 class="text-xl font-black italic text-indigo-500 uppercase">PetStory</h1>
-        <span class="text-[10px] bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full border border-indigo-500/20 font-bold">12H FEED</span>
+<body class="font-sans antialiased">
+
+    <nav class="fixed top-0 left-0 right-0 z-50 glass px-6 py-4">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-8">
+                <h1 class="text-xl font-black italic text-indigo-500 tracking-tighter">PETSTORY</h1>
+                <div class="hidden md:flex gap-6 uppercase">
+                    <a href="#feedSection" class="nav-link">Feed</a>
+                    <a href="#hallOfFame" class="nav-link">Hall of Fame</a>
+                </div>
+            </div>
+            <a href="auth.html" class="bg-indigo-600 hover:bg-indigo-500 px-6 py-2 rounded-full text-xs font-black tracking-widest transition shadow-lg shadow-indigo-500/20">
+                JOIN NOW
+            </a>
+        </div>
+    </nav>
+
+    <header class="min-h-[80vh] flex flex-col items-center justify-center text-center px-6 pt-20">
+        <div class="mb-4 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-[9px] font-bold tracking-[0.3em] text-indigo-400 uppercase">
+            ESTABLISHED 2026
+        </div>
+        <h2 class="text-6xl md:text-8xl font-black tracking-tighter mb-6 italic italic uppercase">The Hall <br>of Fame</h2>
+        <p class="max-w-md text-white/40 text-sm md:text-base leading-relaxed mb-10">
+            Welcome to the elite circle. Only the world's most influential pets make it to the top. Are you ready to make your pet a celebrity?
+        </p>
+        <a href="#joinSection" class="animate-bounce text-white/20 mt-10">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m7 13 5 5 5-5"/><path d="m7 6 5 5 5-5"/></svg>
+        </a>
     </header>
 
-    <main class="w-full max-w-md space-y-8">
-        <section class="glass p-6 rounded-[2rem] space-y-4">
-            <input id="petName" type="text" placeholder="Pet Name..." class="w-full bg-black/40 border border-white/10 rounded-2xl p-4 focus:outline-none focus:border-indigo-500">
-            <select id="petType" class="w-full bg-black/40 border border-white/10 rounded-2xl p-4">
-                <option value="dog">Dog (Bone 🦴)</option>
-                <option value="cat">Cat (Fish 🐟)</option>
-                <option value="bird">Bird (Seed 🌻)</option>
-            </select>
-            <button onclick="submitPet()" class="w-full bg-indigo-600 py-4 rounded-2xl font-black tracking-widest active:scale-95 transition">BEAM UP 🚀</button>
-        </section>
+    <main class="max-w-4xl mx-auto px-6 pb-24 space-y-32">
 
-        <section class="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-[#1a1a24] to-[#0f0f14] px-6 text-center">
-    <div class="mb-6 bg-indigo-500/10 border border-indigo-500/20 px-4 py-1 rounded-full text-[10px] font-bold tracking-[0.3em] text-indigo-400 uppercase">
-        Established 2026
-    </div>
-    <h1 class="text-5xl font-black tracking-tighter mb-4 italic">HALL OF FAME</h1>
-    <p class="max-w-xs text-white/40 text-sm leading-relaxed mb-10">
-        The exclusive club for the world's most influential pets. Only the top 1% reach the global feed.
-    </p>
-
-    <a href="auth.html" class="group relative px-10 py-5 bg-white text-black font-black text-sm rounded-2xl transition-all hover:scale-105 active:scale-95">
-        MAKE YOUR PET A CELEBRITY
-        <div class="absolute inset-0 bg-white blur-xl opacity-20 group-hover:opacity-40 transition-opacity"></div>
-    </a>
-
-    <div id="hallOfFame" class="mt-20 grid grid-cols-2 gap-4 w-full max-w-md">
-        </div>
-</section>
-
-        <section class="w-full max-w-md">
-    <div class="flex flex-col items-center justify-center py-10 text-center">
-        <h2 class="text-3xl font-black mb-2">HALL OF FAME</h2>
-        <p class="text-white/40 text-xs tracking-[0.3em] mb-6 uppercase">The World's Elite Pets</p>
-        
-        <a href="auth.html" class="bg-indigo-600 px-8 py-4 rounded-full font-black text-sm tracking-widest shadow-lg shadow-indigo-500/40 hover:scale-105 transition">
-            MAKE YOUR PET A CELEBRITY
-        </a>
-    </div>
-</section>
-
-        <section>
-            <h2 class="text-xs font-bold text-white/30 uppercase tracking-[0.2em] mb-6">Live Rankings</h2>
-            <div id="petFeed" class="space-y-4">
-                <p class="text-center text-white/10 animate-pulse">Scanning the Edge...</p>
+        <section id="feedSection" class="space-y-8">
+            <div class="flex justify-between items-end border-b border-white/5 pb-4">
+                <div>
+                    <h3 class="text-2xl font-black italic uppercase">Live Feed</h3>
+                    <p class="text-[10px] text-white/30 uppercase tracking-widest font-bold">Resets every 12 hours</p>
+                </div>
+                <span class="text-[10px] bg-red-500/10 text-red-400 px-3 py-1 rounded-full font-bold">LIVE</span>
+            </div>
+            
+            <div id="petFeed" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <p class="text-center text-white/10 animate-pulse col-span-full py-10">Scanning the Edge...</p>
             </div>
         </section>
+
+        <section id="joinSection" class="glass p-12 rounded-[3rem] text-center space-y-8 border-indigo-500/20 shadow-2xl shadow-indigo-500/10">
+            <h3 class="text-4xl font-black italic uppercase">Join the Elite</h3>
+            <p class="text-white/40 max-w-sm mx-auto text-sm">Create an account to upload your pet, earn bones, and climb the Hall of Fame rankings.</p>
+            <div class="flex flex-col gap-4 items-center">
+                <a href="auth.html" class="w-full max-w-xs bg-white text-black py-5 rounded-2xl font-black tracking-widest hover:scale-105 transition active:scale-95 shadow-xl">
+                    SIGN UP WITH GMAIL
+                </a>
+                <p class="text-[10px] text-white/20 uppercase font-bold">Verified accounts only</p>
+            </div>
+        </section>
+
     </main>
 
     <script>
-        async function submitPet() {
-            const name = document.getElementById('petName').value;
-            const type = document.getElementById('petType').value;
-            if(!name) return alert("Name required");
-
-            const res = await fetch('/api/submit', {
-                method: 'POST',
-                body: JSON.stringify({ name, pet_type: type })
-            });
-
-            if(res.ok) { loadFeed(); document.getElementById('petName').value = ""; }
-        }
-
+        // Use your existing loadFeed logic here
         async function loadFeed() {
             const res = await fetch('/api/feed');
             const pets = await res.json();
             const feed = document.getElementById('petFeed');
             
             if(pets.length === 0) {
-                feed.innerHTML = '<p class="text-center text-white/20 py-10">No pets beamed up yet. Be the first!</p>';
+                feed.innerHTML = '<p class="text-center text-white/20 py-10 col-span-full">No celebrities yet. Be the first!</p>';
                 return;
             }
 
             feed.innerHTML = pets.map(p => `
-                <div class="glass p-5 rounded-3xl flex justify-between items-center border border-white/5">
+                <div class="glass p-6 rounded-3xl flex justify-between items-center transition-all hover:bg-white/5 group">
                     <div>
-                        <h3 class="font-bold text-lg">${p.name}</h3>
+                        <h4 class="font-bold text-lg group-hover:text-indigo-400 transition">${p.name}</h4>
                         <p class="text-[10px] text-white/40 uppercase tracking-widest">${p.pet_type}</p>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-4">
                         <span class="text-xs font-mono text-indigo-400">${p.bones || 0}</span>
-                        <button class="bg-white/5 p-3 rounded-2xl border border-white/10 hover:bg-white/10 transition">
+                        <button onclick="votePet('${p.id}')" class="bg-white/5 p-3 rounded-2xl border border-white/10 hover:bg-indigo-600 transition active:scale-90">
                             ${p.pet_type === 'dog' ? '🦴' : p.pet_type === 'cat' ? '🐟' : '🌻'}
                         </button>
                     </div>
@@ -104,21 +99,17 @@
             `).join('');
         }
 
-        loadFeed(); // Initial load
-        setInterval(loadFeed, 10000); // Auto-refresh every 10 seconds
         async function votePet(petId) {
-    // This sends the vote to the Cloudflare Function
-    const res = await fetch('/api/vote', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ petId: petId })
-    });
+            const res = await fetch('/api/vote', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ petId })
+            });
+            if (res.ok) { loadFeed(); }
+        }
 
-    if (res.ok) {
-        // Refresh the feed immediately to show the new score
         loadFeed();
-    }
-}
+        setInterval(loadFeed, 10000);
     </script>
 </body>
 </html>
